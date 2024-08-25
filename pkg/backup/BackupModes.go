@@ -44,6 +44,7 @@ func DefaultBackup(srcDir, destDir string) {
 func CustomBackups(tags []string, destDir string) {
 	fileName := utils.GenCustNames()
 	homeDir, _ := os.UserHomeDir()
+	confGen := conf.ConfGeneratorConstructor()
 
 	if destDir == "" {
 		cwd, err := utils.GetWD()
@@ -61,10 +62,19 @@ func CustomBackups(tags []string, destDir string) {
 			if mode.Tag == tag {
 				srcDir := filepath.Join(homeDir, mode.Path)
 				destDir := filepath.Join(destDir, filepath.Base(srcDir))
-				Backup(srcDir, destDir)
+				err := Backup(srcDir, destDir)
+				if err != nil {
+					slog.Error(err.Error())
+					return
+				}
+				confGen.AddEntry(mode.Name, homeDir, mode.Path)
 			}
 		}
 	}
-
+	err := confGen.Generate(wd)
+	if err != nil {
+		slog.Error(err.Error())
+		return
+	}
 	utils.CompressAndArchive(wd, fileName)
 }

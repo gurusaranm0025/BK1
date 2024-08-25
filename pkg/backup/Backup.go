@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 )
 
-func Backup(srcDir, destDir string) {
+func Backup(srcDir, destDir string) error {
 	if destDir == "" {
 		cwd, err := utils.GetWD()
 		if err != nil {
@@ -22,6 +22,8 @@ func Backup(srcDir, destDir string) {
 	if err != nil {
 		slog.Error(err.Error())
 	}
+
+	return nil
 }
 
 func copyFile(src, dest string) error {
