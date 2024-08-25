@@ -53,13 +53,18 @@ func CustomBackups(tags []string, destDir string) {
 
 		destDir = filepath.Join(cwd, fileName)
 	}
+	wd := destDir
 
 	fmt.Println(tags, destDir)
 	for _, tag := range tags {
 		for _, mode := range conf.Modes {
 			if mode.Tag == tag {
-				Backup(filepath.Join(homeDir, mode.Path), destDir)
+				srcDir := filepath.Join(homeDir, mode.Path)
+				destDir := filepath.Join(destDir, filepath.Base(srcDir))
+				Backup(srcDir, destDir)
 			}
 		}
 	}
+
+	utils.CompressAndArchive(wd, fileName)
 }
