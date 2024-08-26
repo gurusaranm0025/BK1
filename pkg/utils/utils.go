@@ -1,44 +1,101 @@
 package utils
 
 import (
-	"log/slog"
+	"errors"
+	"gurusaranm0025/hyprone/pkg/conf"
+	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"time"
 )
 
-func GetWD() (string, error) {
-	wDir, err := os.Getwd()
+func copyFile(src, dest string) error {
+	sourceFile, err := os.Open(src)
 	if err != nil {
-		return "", err
+		return err
 	}
-	return wDir, nil
+
+	defer sourceFile.Close()
+
+	destinationFile, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+	defer destinationFile.Close()
+
+	_, err = io.Copy(destinationFile, sourceFile)
+	if err != nil {
+		return err
+	}
+
+	return destinationFile.Sync()
 }
 
-func CompressAndArchive(path, fileName string) error {
-	var destDir string
-	baseDir := filepath.Base(path)
-	if fileName == "" {
-		destDir = baseDir + ".hone.tar.gz"
-	} else {
-		destDir = fileName + ".hone.tar.gz"
+func CopyDir(srcDir, destDir string) error {
+	entries, err := os.ReadDir(srcDir)
+	if err != nil {
+		return err
 	}
 
-	cmd := exec.Command("tar", "-czf", destDir, baseDir)
-	cmd.Dir = filepath.Dir(filepath.Clean(path))
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		slog.Error(err.Error())
-	} else {
-		slog.Info("OUTPUT ==>\n" + string(output))
+	if _, err := os.Stat(destDir); os.IsNotExist(err) {
+		err := os.MkdirAll(destDir, os.ModePerm)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, entry := range entries {
+		srcPath := filepath.Join(srcDir, entry.Name())
+		dstPath := filepath.Join(destDir, entry.Name())
+
+		if entry.IsDir() {
+			err := CopyDir(srcPath, dstPath)
+			if err != nil {
+				return err
+			}
+		} else {
+			err := copyFile(srcPath, dstPath)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
 }
 
-func GenCustNames() string {
-	currentTime := time.Now()
-	timeString := currentTime.Format("20060102150405")
-	return "Backup" + timeString
+func CreateCacheDir(cacheDirName string) (string, error) {
+	var err error
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	cacheDirPath := filepath.Join(homeDir, conf.CachePath, cacheDirName)
+	pathInfo, err := os.Stat(cacheDirPath)
+	if os.IsNotExist(err) {
+		err := os.MkdirAll(cacheDirPath, os.ModePerm)
+		if err != nil {
+			return "", err
+		}
+		return cacheDirPath, nil
+	}
+
+	if err != nil {
+		return "", err
+	}
+
+	if !pathInfo.IsDir() {
+		return "", errors.New("path is not a directory")
+	}
+
+	if err = os.RemoveAll(cacheDirPath); err != nil {
+		return "", err
+	}
+
+	err = os.MkdirAll(cacheDirPath, os.ModePerm)
+	if err != nil {
+		return "", err
+	}
+
+	return cacheDirPath, nil
 }

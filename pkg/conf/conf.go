@@ -1,5 +1,7 @@
 package conf
 
+var CachePath string = ".cache/BK1"
+
 var ModesPath = struct {
 	Hyprland string
 	Rofi     string
@@ -21,9 +23,9 @@ type Mode struct {
 }
 
 var Modes = []Mode{
-	{Name: "hyprland", Path: ModesPath.Hyprland, Tag: "h"},
+	{Name: "hypr", Path: ModesPath.Hyprland, Tag: "h"},
 	{Name: "rofi", Path: ModesPath.Rofi, Tag: "r"},
 	{Name: "waybar", Path: ModesPath.Waybar, Tag: "wb"},
 	{Name: "wlogout", Path: ModesPath.Wlogout, Tag: "wl"},
-	{Name: "Dunst", Path: ModesPath.Dunst, Tag: "d"},
+	{Name: "dunst", Path: ModesPath.Dunst, Tag: "d"},
 }
