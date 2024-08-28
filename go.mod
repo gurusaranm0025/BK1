@@ -1,3 +1,3 @@
-module gurusaranm0025/hyprone
+module gurusaranm0025/bk1
 
 go 1.23.0
