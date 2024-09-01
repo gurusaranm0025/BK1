@@ -3,9 +3,9 @@ package backup
 import (
 	"encoding/json"
 	"fmt"
-	"gurusaranm0025/hyprone/pkg/conf"
-	"gurusaranm0025/hyprone/pkg/types"
-	"gurusaranm0025/hyprone/pkg/utils"
+	"gurusaranm0025/bk1/pkg/conf"
+	"gurusaranm0025/bk1/pkg/types"
+	"gurusaranm0025/bk1/pkg/utils"
 	"io"
 	"log/slog"
 	"os"

@@ -2,9 +2,9 @@ package main
 
 import (
 	"flag"
-	"gurusaranm0025/hyprone/pkg/backup"
-	"gurusaranm0025/hyprone/pkg/restore"
-	"gurusaranm0025/hyprone/pkg/types"
+	"gurusaranm0025/bk1/pkg/backup"
+	"gurusaranm0025/bk1/pkg/restore"
+	"gurusaranm0025/bk1/pkg/types"
 	"log/slog"
 	"os"
 	"path/filepath"

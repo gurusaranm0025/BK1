@@ -2,7 +2,7 @@ package utils
 
 import (
 	"errors"
-	"gurusaranm0025/hyprone/pkg/conf"
+	"gurusaranm0025/bk1/pkg/conf"
 	"io"
 	"os"
 	"path/filepath"
