@@ -81,12 +81,28 @@ func RestoreConfsConstructor(path string) (*RestoreConfs, error) {
 	return &restoreConf, nil
 }
 
-func (r *RestoreConfs) Restore() {
+func (r *RestoreConfs) Restore() error {
 	for _, slot := range r.restoreConf.RestoreSolts {
-		err := utils.CopyDir(filepath.Join(r.cachedDirPath, slot.DirName), filepath.Join(r.homeDir, slot.Path))
+
+		destDir := slot.Path
+		if slot.IsUnderHome {
+			destDir = filepath.Join(r.homeDir, destDir)
+		}
+
+		srcDir := filepath.Join(r.cachedDirPath, slot.DirName)
+		if slot.IsFile {
+			err := utils.CopyFile(srcDir, destDir)
+			if err != nil {
+				return err
+			}
+			continue
+		}
+
+		err := utils.CopyDir(srcDir, destDir)
 		if err != nil {
 			slog.Error(err.Error())
-			return
+			return nil
 		}
 	}
+	return nil
 }

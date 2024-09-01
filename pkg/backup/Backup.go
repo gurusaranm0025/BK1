@@ -176,6 +176,8 @@ func (bc *BKConf) compressAndArchive() (string, error) {
 
 func (bc *BKConf) copyToCache() error {
 	var err error
+	var srcDir, DirName, destDir string
+	var isUnderHome, isFile bool
 	slog.Info("==> Checking cache directory....")
 	cachePath, err := utils.CreateCacheDir(bc.backupConf.FolderName)
 	if err != nil {
@@ -186,15 +188,37 @@ func (bc *BKConf) copyToCache() error {
 	slog.Info("Copying Files==> ....")
 	if len(bc.backupConf.BackupSources) > 0 {
 		for _, source := range bc.backupConf.BackupSources {
-			source.Path = strings.TrimPrefix(source.Path, bc.HomeDir+"/")
-			srcDir := filepath.Join(bc.HomeDir, source.Path)
-			DirName := filepath.Base(srcDir)
-			destDir := filepath.Join(bc.cachePath, DirName)
-			err := utils.CopyDir(srcDir, destDir)
+			info, err := os.Stat(source.Path)
 			if err != nil {
 				return err
 			}
-			bc.addRestoreSlot(DirName, source.Path)
+
+			srcDir = source.Path
+			DirName = filepath.Base(srcDir)
+			destDir = filepath.Join(bc.cachePath, DirName)
+
+			if info.IsDir() {
+				isFile = false
+				err := utils.CopyDir(srcDir, destDir)
+				if err != nil {
+					return err
+				}
+			} else {
+				isFile = true
+				err := utils.CopyFile(srcDir, destDir)
+				if err != nil {
+					return err
+				}
+			}
+
+			if strings.HasPrefix(source.Path, bc.HomeDir) {
+				srcDir = strings.TrimPrefix(srcDir, bc.HomeDir)
+				isUnderHome = true
+			} else {
+				isUnderHome = false
+			}
+
+			bc.addRestoreSlot(DirName, srcDir, isUnderHome, isFile)
 		}
 	}
 
@@ -209,7 +233,7 @@ func (bc *BKConf) copyToCache() error {
 					if err != nil {
 						return err
 					}
-					bc.addRestoreSlot(DirName, mode.Path)
+					bc.addRestoreSlot(DirName, mode.Path, mode.IsUnderHome, mode.IsFile)
 				} else {
 					//
 					//
@@ -245,10 +269,12 @@ func (bc *BKConf) genRestoreConf() error {
 	return nil
 }
 
-func (bc *BKConf) addRestoreSlot(DirName, Path string) {
+func (bc *BKConf) addRestoreSlot(DirName, Path string, isUnderHome, isFile bool) {
 	restoreSlot := &types.RestoreSlot{
-		DirName: DirName,
-		Path:    Path,
+		DirName:     DirName,
+		Path:        Path,
+		IsUnderHome: isUnderHome,
+		IsFile:      isFile,
 	}
 	bc.restoreConf.RestoreSolts = append(bc.restoreConf.RestoreSolts, restoreSlot)
 }

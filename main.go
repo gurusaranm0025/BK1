@@ -127,7 +127,11 @@ func main() {
 			slog.Error(err.Error())
 			return
 		}
-		restoreProcess.Restore()
+		err = restoreProcess.Restore()
+		if err != nil {
+			slog.Error(err.Error())
+			return
+		}
 	}
 
 	if len(fileBasedBak) > 0 {

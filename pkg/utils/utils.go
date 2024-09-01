@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 )
 
-func copyFile(src, dest string) error {
+func CopyFile(src, dest string) error {
 	sourceFile, err := os.Open(src)
 	if err != nil {
 		return err
@@ -31,6 +31,7 @@ func copyFile(src, dest string) error {
 }
 
 func CopyDir(srcDir, destDir string) error {
+
 	entries, err := os.ReadDir(srcDir)
 	if err != nil {
 		return err
@@ -53,7 +54,7 @@ func CopyDir(srcDir, destDir string) error {
 				return err
 			}
 		} else {
-			err := copyFile(srcPath, dstPath)
+			err := CopyFile(srcPath, dstPath)
 			if err != nil {
 				return err
 			}

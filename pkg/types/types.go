@@ -2,6 +2,7 @@ package types
 
 type Source struct {
 	Name string
+	// isUnderHome bool
 	Path string
 }
 
@@ -12,8 +13,10 @@ type BKConfJSON struct {
 }
 
 type RestoreSlot struct {
-	DirName string
-	Path    string
+	DirName     string
+	Path        string
+	IsUnderHome bool
+	IsFile      bool
 }
 
 type RTConfJSON struct {
