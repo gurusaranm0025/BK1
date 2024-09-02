@@ -3,9 +3,9 @@ package backup
 import (
 	"encoding/json"
 	"fmt"
-	"gurusaranm0025/bk1/pkg/conf"
-	"gurusaranm0025/bk1/pkg/types"
-	"gurusaranm0025/bk1/pkg/utils"
+	"gurusaranm0025/cbk1/pkg/conf"
+	"gurusaranm0025/cbk1/pkg/types"
+	"gurusaranm0025/cbk1/pkg/utils"
 	"io"
 	"log/slog"
 	"os"
@@ -39,8 +39,6 @@ func DefaultBackupConfConstructor(Name string, tags []string, destDir string, so
 	}
 
 	if len(destDir) > 0 {
-		fmt.Println(Name, tags, destDir, sources)
-		slog.Info("pass 1")
 		info, err := os.Stat(destDir)
 		if err != nil {
 			return nil, err
@@ -48,7 +46,7 @@ func DefaultBackupConfConstructor(Name string, tags []string, destDir string, so
 
 		if info.IsDir() {
 			bkConf.backupConf.FolderName = "Backup" + time.Now().Format("20060102150405")
-			bkConf.destDir = filepath.Join(destDir, bkConf.backupConf.FolderName+".bk1")
+			bkConf.destDir = filepath.Join(destDir, bkConf.backupConf.FolderName+".cbk")
 			bkConf.restoreConf.FileName = bkConf.backupConf.FolderName
 		}
 
@@ -110,16 +108,6 @@ func BackupConfConstrucor(confPath string) (*BKConf, error) {
 	}
 	bkConf.destDir = filepath.Join(cwd, bkConf.backupConf.FolderName+".bk1")
 
-	// debug printing
-	// fmt.Println("File Name ==> ", backupConf.backupConf.FolderName)
-	// for _, entry := range backupConf.backupConf.BackupSources {
-	// 	fmt.Println("Entries ==> ", entry.Name, entry.Path)
-	// }
-
-	// for _, tag := range backupConf.backupConf.Tags {
-	// 	fmt.Println("Tags ==> ", tag)
-	// }
-
 	return &bkConf, nil
 }
 
@@ -176,8 +164,9 @@ func (bc *BKConf) compressAndArchive() (string, error) {
 
 func (bc *BKConf) copyToCache() error {
 	var err error
-	var srcDir, DirName, destDir string
+	var srcDir, SlotName, destDir string
 	var isUnderHome, isFile bool
+
 	slog.Info("==> Checking cache directory....")
 	cachePath, err := utils.CreateCacheDir(bc.backupConf.FolderName)
 	if err != nil {
@@ -194,8 +183,8 @@ func (bc *BKConf) copyToCache() error {
 			}
 
 			srcDir = source.Path
-			DirName = filepath.Base(srcDir)
-			destDir = filepath.Join(bc.cachePath, DirName)
+			SlotName = filepath.Base(srcDir)
+			destDir = filepath.Join(bc.cachePath, SlotName)
 
 			if info.IsDir() {
 				isFile = false
@@ -218,7 +207,7 @@ func (bc *BKConf) copyToCache() error {
 				isUnderHome = false
 			}
 
-			bc.addRestoreSlot(DirName, srcDir, isUnderHome, isFile)
+			bc.addRestoreSlot(SlotName, srcDir, isUnderHome, isFile)
 		}
 	}
 
@@ -227,13 +216,13 @@ func (bc *BKConf) copyToCache() error {
 			for _, mode := range conf.Modes {
 				if mode.Tag == tag {
 					srcDir := filepath.Join(bc.HomeDir, mode.Path)
-					DirName := filepath.Base(srcDir)
-					destDir := filepath.Join(bc.cachePath, DirName)
+					SlotName := filepath.Base(srcDir)
+					destDir := filepath.Join(bc.cachePath, SlotName)
 					err := utils.CopyDir(srcDir, destDir)
 					if err != nil {
 						return err
 					}
-					bc.addRestoreSlot(DirName, mode.Path, mode.IsUnderHome, mode.IsFile)
+					bc.addRestoreSlot(SlotName, mode.Path, mode.IsUnderHome, mode.IsFile)
 				} else {
 					//
 					//
@@ -257,7 +246,7 @@ func (bc *BKConf) genRestoreConf() error {
 		return err
 	}
 
-	file, err := os.Create(filepath.Join(bc.cachePath, "bk1.json"))
+	file, err := os.Create(filepath.Join(bc.cachePath, "cbk1.json"))
 	if err != nil {
 		return err
 	}
@@ -269,9 +258,9 @@ func (bc *BKConf) genRestoreConf() error {
 	return nil
 }
 
-func (bc *BKConf) addRestoreSlot(DirName, Path string, isUnderHome, isFile bool) {
+func (bc *BKConf) addRestoreSlot(Name, Path string, isUnderHome, isFile bool) {
 	restoreSlot := &types.RestoreSlot{
-		DirName:     DirName,
+		Name:        Name,
 		Path:        Path,
 		IsUnderHome: isUnderHome,
 		IsFile:      isFile,
