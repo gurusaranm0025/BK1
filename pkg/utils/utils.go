@@ -2,7 +2,7 @@ package utils
 
 import (
 	"errors"
-	"gurusaranm0025/cbk1/pkg/conf"
+	"gurusaranm0025/cb/pkg/conf"
 	"io"
 	"os"
 	"path/filepath"
