@@ -3,9 +3,9 @@ package backup
 import (
 	"encoding/json"
 	"fmt"
-	"gurusaranm0025/cbk1/pkg/conf"
-	"gurusaranm0025/cbk1/pkg/types"
-	"gurusaranm0025/cbk1/pkg/utils"
+	"gurusaranm0025/cb/pkg/conf"
+	"gurusaranm0025/cb/pkg/types"
+	"gurusaranm0025/cb/pkg/utils"
 	"io"
 	"log/slog"
 	"os"
@@ -246,7 +246,7 @@ func (bc *BKConf) genRestoreConf() error {
 		return err
 	}
 
-	file, err := os.Create(filepath.Join(bc.cachePath, "cbk1.json"))
+	file, err := os.Create(filepath.Join(bc.cachePath, "cb.json"))
 	if err != nil {
 		return err
 	}

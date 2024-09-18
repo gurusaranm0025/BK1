@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gurusaranm0025/cbk1/pkg/types"
-	"gurusaranm0025/cbk1/pkg/utils"
+	"gurusaranm0025/cb/pkg/types"
+	"gurusaranm0025/cb/pkg/utils"
 	"io"
 	"log/slog"
 	"os"
@@ -63,7 +63,7 @@ func RestoreConfsConstructor(path string) (*RestoreConfs, error) {
 	FolderName := strings.TrimSuffix(path, ".cbk")
 	restoreConf.cachedDirPath = filepath.Join(destDir, FolderName)
 
-	confFile := filepath.Join(destDir, FolderName, "cbk1.json")
+	confFile := filepath.Join(destDir, FolderName, "cb.json")
 
 	//opening the confFile
 	file, err := os.Open(confFile)

@@ -1,6 +1,6 @@
 package conf
 
-var CachePath string = ".cache/BK1"
+var CachePath string = ".cache/cb"
 
 var ModesPath = struct {
 	Hyprland string

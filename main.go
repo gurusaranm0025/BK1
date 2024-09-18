@@ -2,9 +2,9 @@ package main
 
 import (
 	"flag"
-	"gurusaranm0025/cbk1/pkg/backup"
-	"gurusaranm0025/cbk1/pkg/restore"
-	"gurusaranm0025/cbk1/pkg/types"
+	"gurusaranm0025/cb/pkg/backup"
+	"gurusaranm0025/cb/pkg/restore"
+	"gurusaranm0025/cb/pkg/types"
 	"log/slog"
 	"os"
 	"path/filepath"
