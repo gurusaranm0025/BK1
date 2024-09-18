@@ -35,7 +35,7 @@ func DefaultBackupConfConstructor(Name string, tags []string, destDir string, so
 		}
 		bkConf.backupConf.FolderName = Name + time.Now().Format("20060102150405")
 		bkConf.restoreConf.FileName = bkConf.backupConf.FolderName
-		bkConf.destDir = filepath.Join(cwd, bkConf.backupConf.FolderName+".bk1")
+		bkConf.destDir = filepath.Join(cwd, bkConf.backupConf.FolderName+".cbk")
 	}
 
 	if len(destDir) > 0 {
@@ -106,7 +106,7 @@ func BackupConfConstrucor(confPath string) (*BKConf, error) {
 	if err != nil {
 		return nil, err
 	}
-	bkConf.destDir = filepath.Join(cwd, bkConf.backupConf.FolderName+".bk1")
+	bkConf.destDir = filepath.Join(cwd, bkConf.backupConf.FolderName+".cbk")
 
 	return &bkConf, nil
 }
@@ -265,5 +265,7 @@ func (bc *BKConf) addRestoreSlot(Name, Path string, isUnderHome, isFile bool) {
 		IsUnderHome: isUnderHome,
 		IsFile:      isFile,
 	}
+
 	bc.restoreConf.RestoreSolts = append(bc.restoreConf.RestoreSolts, restoreSlot)
+
 }

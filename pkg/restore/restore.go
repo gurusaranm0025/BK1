@@ -18,6 +18,7 @@ type RestoreConfs struct {
 	restoreConf   types.RTConfJSON
 	cachedDirPath string
 	homeDir       string
+	cwd           string
 }
 
 func RestoreConfsConstructor(path string) (*RestoreConfs, error) {
@@ -28,18 +29,23 @@ func RestoreConfsConstructor(path string) (*RestoreConfs, error) {
 	if path == "" {
 		return nil, errors.New("path not found")
 	}
-
+	fmt.Println("PATH ==>", path)
 	// cache directory validation
 	destDir, err := utils.CreateCacheDir("")
 	if err != nil {
 		return nil, err
 	}
 
-	// Home Dir & destDir
-	restoreConf.homeDir, err = os.UserHomeDir()
+	// CWD, Home Dir & destDir
+	restoreConf.cwd, err = os.Getwd()
 	if err != nil {
 		return nil, err
 	}
+	tempArr := strings.Split(restoreConf.cwd, "/")
+	restoreConf.homeDir = filepath.Join(tempArr[0], tempArr[1])
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	// extracting the backup file
 	cmd := exec.Command("tar", "-xzvf", path, "-C", destDir)
@@ -54,7 +60,7 @@ func RestoreConfsConstructor(path string) (*RestoreConfs, error) {
 	}
 
 	// getting the confFile path
-	FolderName := strings.TrimSuffix(path, ".bk1")
+	FolderName := strings.TrimSuffix(path, ".cbk")
 	restoreConf.cachedDirPath = filepath.Join(destDir, FolderName)
 
 	confFile := filepath.Join(destDir, FolderName, "cbk1.json")
@@ -106,5 +112,6 @@ func (r *RestoreConfs) Restore() error {
 			return nil
 		}
 	}
+
 	return nil
 }

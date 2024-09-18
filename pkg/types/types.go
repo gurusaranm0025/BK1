@@ -21,4 +21,11 @@ type RestoreSlot struct {
 type RTConfJSON struct {
 	FileName     string
 	RestoreSolts []*RestoreSlot
+	// RootCat []*RestoreSlot
+	// HomeCat []*RestoreSlot
 }
+
+// type RestoreCategory struct {
+// 	RootCat      bool
+// 	RestoreSlots []*RestoreSlot
+// }
