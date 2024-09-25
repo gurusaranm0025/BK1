@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"gurusaranm0025/cb/pkg/backup"
+	"gurusaranm0025/cb/pkg/components"
 	"gurusaranm0025/cb/pkg/restore"
 	"gurusaranm0025/cb/pkg/types"
 	"log/slog"
@@ -12,6 +13,40 @@ import (
 )
 
 func main() {
+	var InputData components.InputData
+	// var hypr, waybar, wlogout, rofi, dunst bool
+
+	flag.BoolVar(&InputData.IsBackup, "B", false, "takes backup.")
+	flag.BoolFunc("hypr", "takes backup of hyprland conf folder", func(s string) error {
+		InputData.BackupData.Tags = append(InputData.BackupData.Tags, "hypr")
+		return nil
+	})
+	flag.BoolFunc("rofi", "takes backup of rofi conf folder", func(s string) error {
+		InputData.BackupData.Tags = append(InputData.BackupData.Tags, "rofi")
+		return nil
+	})
+	flag.BoolFunc("waybar", "takes backup of waybar conf folder", func(s string) error {
+		InputData.BackupData.Tags = append(InputData.BackupData.Tags, "waybar")
+		return nil
+	})
+	flag.BoolFunc("wlogout", "takes backup of wlogout conf folder", func(s string) error {
+		InputData.BackupData.Tags = append(InputData.BackupData.Tags, "wlogout")
+		return nil
+	})
+	flag.BoolFunc("dunst", "takes backup of dunst conf folder", func(s string) error {
+		InputData.BackupData.Tags = append(InputData.BackupData.Tags, "dunst")
+		return nil
+	})
+
+	flag.StringVar(&InputData.BackupData.InputPath, "path", "", "the path which you want to take backup")
+	flag.StringVar(&InputData.BackupData.OutputPath, "o", "", "where to save the backup (default is the currnet working directory)")
+	flag.StringVar(&InputData.BackupData.ConfPath, "bak-conf", "", "the path to the config file for taking backup.")
+
+	flag.Parse()
+
+}
+
+func BakMain() {
 	var pathFlag, destFlag, tags, r, fileBasedBak string
 	var hypr, rofi, waybar, hrw bool
 

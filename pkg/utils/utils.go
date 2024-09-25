@@ -5,6 +5,7 @@ import (
 	"gurusaranm0025/cb/pkg/conf"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 )
 
@@ -99,4 +100,13 @@ func CreateCacheDir(cacheDirName string) (string, error) {
 	}
 
 	return cacheDirPath, nil
+}
+
+func RunAsSudo() {
+	cmd := exec.Command("sudo", os.Args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	cmd.Run()
 }

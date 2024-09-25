@@ -24,6 +24,46 @@ type Mode struct {
 	IsFile      bool
 }
 
+type ModesMapItem struct {
+	Path        string
+	Tag         string
+	IsUnderHome bool
+	IsDir       bool
+}
+
+var ModesMap = map[string]*ModesMapItem{
+	"hypr": {
+		Path:        ModesPath.Hyprland,
+		Tag:         "h",
+		IsUnderHome: true,
+		IsDir:       true,
+	},
+	"rofi": {
+		Path:        ModesPath.Rofi,
+		Tag:         "r",
+		IsUnderHome: true,
+		IsDir:       true,
+	},
+	"waybar": {
+		Path:        ModesPath.Waybar,
+		Tag:         "wb",
+		IsUnderHome: true,
+		IsDir:       true,
+	},
+	"wlogout": {
+		Path:        ModesPath.Wlogout,
+		Tag:         "wl",
+		IsUnderHome: true,
+		IsDir:       true,
+	},
+	"dunst": {
+		Path:        ModesPath.Dunst,
+		Tag:         "d",
+		IsUnderHome: true,
+		IsDir:       true,
+	},
+}
+
 var Modes = []Mode{
 	{Name: "hypr", Path: ModesPath.Hyprland, Tag: "h", IsUnderHome: true, IsFile: false},
 	{Name: "rofi", Path: ModesPath.Rofi, Tag: "r", IsUnderHome: true, IsFile: false},
