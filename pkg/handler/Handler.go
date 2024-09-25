@@ -109,7 +109,7 @@ func (h *Handler) packDirs() error {
 			}
 
 			// header name set
-			header.Name, err = filepath.Rel(dir, path)
+			header.Name, err = filepath.Rel(filepath.Dir(dir), path)
 			if err != nil {
 				return err
 			}
