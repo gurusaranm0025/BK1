@@ -14,9 +14,10 @@ import (
 
 func main() {
 	var InputData components.InputData
-	// var hypr, waybar, wlogout, rofi, dunst bool
 
 	flag.BoolVar(&InputData.IsBackup, "B", false, "takes backup.")
+
+	// Tag Flags
 	flag.BoolFunc("hypr", "takes backup of hyprland conf folder", func(s string) error {
 		InputData.BackupData.Tags = append(InputData.BackupData.Tags, "hypr")
 		return nil
@@ -38,9 +39,17 @@ func main() {
 		return nil
 	})
 
+	// Input Path
 	flag.StringVar(&InputData.BackupData.InputPath, "path", "", "the path which you want to take backup")
+
+	// Output Path
 	flag.StringVar(&InputData.BackupData.OutputPath, "o", "", "where to save the backup (default is the currnet working directory)")
+
+	// Backup config file
 	flag.StringVar(&InputData.BackupData.ConfPath, "bak-conf", "", "the path to the config file for taking backup.")
+	if len(InputData.BackupData.ConfPath) > 0 {
+		InputData.BackupData.UseConf = true
+	}
 
 	flag.Parse()
 

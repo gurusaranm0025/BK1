@@ -2,3 +2,4 @@ hyprone
 go.sum
 Backup*
 hyprone.bak.conf
+vendor
