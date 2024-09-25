@@ -145,9 +145,30 @@ func (h *Handler) packDirs() error {
 
 func (h *Handler) Pack() error {
 	// creating tar and other writers
-	if err := h.createWriters(); err != nil {
+	// Creating a output file
+	outFile, err := os.Create(h.OutputFiles[0] + ".cb")
+	if err != nil {
 		return err
 	}
+	defer outFile.Close()
+
+	// Cerating zstd writer
+	zstdWriter, err := zstd.NewWriter(outFile)
+	if err != nil {
+		return err
+	}
+	defer zstdWriter.Close()
+
+	// creating gzip writer
+	gzipWriter, err := gzip.NewWriterLevel(zstdWriter, gzip.BestCompression)
+	if err != nil {
+		return err
+	}
+	defer gzipWriter.Close()
+
+	// creating tar writer
+	h.tarWriter = tar.NewWriter(gzipWriter)
+	defer h.tarWriter.Close()
 
 	// pack the files
 	if err := h.packFiles(); err != nil {

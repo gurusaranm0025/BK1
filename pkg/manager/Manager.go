@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // TODO:
@@ -32,6 +33,7 @@ type Manager struct {
 	InputData    components.InputData
 	BackupConfig BakJSON
 	HomeDir      string
+	CWD          string
 	Handler      handler.Handler
 }
 
@@ -41,7 +43,14 @@ func NewManager(inputData components.InputData) (*Manager, error) {
 
 	manager.InputData = inputData
 
+	// Getting home dir
 	manager.HomeDir, err = os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+
+	// Getting CWD
+	manager.CWD, err = os.Getwd()
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +180,7 @@ func (m *Manager) evalBackupConfig() error {
 func (m *Manager) evalInputFilePath() error {
 
 	if !(len(m.InputData.BackupData.InputPath) > 0) {
-		if !m.InputData.BackupData.UseConf && !(len(m.BackupConfig.Tags) > 0) {
+		if !m.InputData.BackupData.UseConf && !(len(m.InputData.BackupData.Tags) > 0) {
 			return fmt.Errorf("no paths or tags are given for taking backup")
 		}
 	} else if len(m.InputData.BackupData.InputPath) > 0 {
@@ -206,9 +215,93 @@ func (m *Manager) evalTags() error {
 	return nil
 }
 
+// Evaluating the given output path
+func (m *Manager) evalOutputFiles() error {
+	// Checking the output path and output file name
+	if !(len(m.InputData.BackupData.OutputPath) > 0) {
+		// Is Confif file given
+		if !m.InputData.BackupData.UseConf {
+			// no config file then name based on current time
+			m.Handler.OutputFiles = []string{filepath.Join(m.CWD, "Backup"+time.Now().Format("20060102150405"))}
+			return nil
+		} else {
+			// using a config
+			// Backup file name from the config
+			path := filepath.Join(m.CWD, m.BackupConfig.BackupName)
+
+			// getting the abspath
+			abspath, err := filepath.Abs(path)
+			if err != nil {
+				slog.Warn("Error getting absolute path for output file, proceeding with relative path.")
+				abspath = path
+			}
+
+			// checking the path
+			info, err := os.Stat(abspath)
+			// file doesn't exist NO ISSUES
+			if err == os.ErrNotExist {
+				m.Handler.OutputFiles = []string{abspath}
+				return nil
+			}
+
+			// Other issues, return it
+			if err != nil {
+				return err
+			}
+
+			// Its a folder, return it
+			if info.IsDir() {
+				return fmt.Errorf("the output path '%s' is already taken as a directory", abspath)
+			} else {
+				// else a little warning about overwritting
+				slog.Warn(fmt.Sprintf("the output file '%s' already exists and it will overwritten", abspath))
+				time.Sleep(5 * time.Second)
+			}
+
+			// seeting Handler data
+			m.Handler.OutputFiles = []string{abspath}
+		}
+	} else {
+		// output path is given
+		// getting absolute path
+		abspath, err := filepath.Abs(m.InputData.BackupData.OutputPath)
+		if err != nil {
+			slog.Warn("Error getting absolute path for output file, proceeding with relative path.")
+			abspath = m.InputData.BackupData.OutputPath
+		}
+
+		// checking the path
+		info, err := os.Stat(abspath)
+		// file doesn't exit. NO ISSUES
+		if err == os.ErrNotExist {
+			m.Handler.OutputFiles = []string{abspath}
+			return nil
+		}
+
+		// Other issues, return it.
+		if err != nil {
+			return err
+		}
+
+		// Its a folder, return it
+		if info.IsDir() {
+			return fmt.Errorf("the output path '%s' is already taken as a directory", abspath)
+		} else {
+			// else a little message of overwritting
+			slog.Warn(fmt.Sprintf("the output file '%s' already exists and it will overwritten", abspath))
+			time.Sleep(5 * time.Second)
+		}
+
+		// setting Handler data
+		m.Handler.OutputFiles = []string{abspath}
+	}
+
+	return nil
+}
+
 func (m *Manager) Manage() error {
 	if m.InputData.IsBackup {
-
+		slog.Info("its backup")
 		// Config file
 		if m.InputData.BackupData.UseConf {
 			// reading backup config file
@@ -221,16 +314,28 @@ func (m *Manager) Manage() error {
 				return err
 			}
 		}
-
+		slog.Info("no conf")
 		// Evaluating the input path
 		if err := m.evalInputFilePath(); err != nil {
 			return err
 		}
+		slog.Info("no input")
 
 		// Evaluating the tags from the CLI
 		if err := m.evalTags(); err != nil {
 			return err
 		}
+
+		// Evaluating the output path
+		if err := m.evalOutputFiles(); err != nil {
+			return err
+		}
+
+		// Handling Handler: PACKING
+		if err := m.Handler.Pack(); err != nil {
+			return err
+		}
+
 	} else if m.InputData.IsRestore {
 		// WORK IN PROGRESS
 	} else {

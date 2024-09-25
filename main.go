@@ -2,8 +2,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"gurusaranm0025/cb/pkg/backup"
 	"gurusaranm0025/cb/pkg/components"
+	"gurusaranm0025/cb/pkg/manager"
 	"gurusaranm0025/cb/pkg/restore"
 	"gurusaranm0025/cb/pkg/types"
 	"log/slog"
@@ -53,6 +55,22 @@ func main() {
 
 	flag.Parse()
 
+	fmt.Println(InputData)
+
+	manager, err := manager.NewManager(InputData)
+	if err != nil {
+		slog.Error(err.Error())
+		os.Exit(1)
+		return
+	}
+
+	if err := manager.Manage(); err != nil {
+		slog.Error(err.Error())
+		os.Exit(1)
+		return
+	}
+
+	os.Exit(0)
 }
 
 func BakMain() {
