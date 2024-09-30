@@ -2,10 +2,13 @@ package handler
 
 import (
 	"archive/tar"
+	"encoding/json"
+	"gurusaranm0025/cb/pkg/types"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/klauspost/compress/gzip"
 	"github.com/klauspost/compress/zstd"
@@ -14,38 +17,45 @@ import (
 type Handler struct {
 	InputFiles   []string
 	InputFolders []string
-	OutputFiles  []string //check this is passed from the manager
+	OutputFiles  []string //double check this is passed from the manager
 	tarWriter    *tar.Writer
 	tarReader    tar.Reader
+
+	RestJSONFile types.RestJSON
 }
 
-func (h *Handler) createWriters() error {
-	// Creating a output file
-	outFile, err := os.Create(h.OutputFiles[0] + ".cb")
-	if err != nil {
-		return err
-	}
-	defer outFile.Close()
+// func (h *Handler) createWriters() error {
+// 	// Creating a output file
+// 	outFile, err := os.Create(h.OutputFiles[0] + ".cb")
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer outFile.Close()
 
-	// Cerating zstd writer
-	zstdWriter, err := zstd.NewWriter(outFile)
-	if err != nil {
-		return err
-	}
-	defer zstdWriter.Close()
+// 	// Cerating zstd writer
+// 	zstdWriter, err := zstd.NewWriter(outFile)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer zstdWriter.Close()
 
-	// creating gzip writer
-	gzipWriter, err := gzip.NewWriterLevel(zstdWriter, gzip.BestCompression)
-	if err != nil {
-		return err
-	}
-	defer gzipWriter.Close()
+// 	// creating gzip writer
+// 	gzipWriter, err := gzip.NewWriterLevel(zstdWriter, gzip.BestCompression)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer gzipWriter.Close()
 
-	// creating tar writer
-	h.tarWriter = tar.NewWriter(gzipWriter)
-	defer h.tarWriter.Close()
+// 	// creating tar writer
+// 	h.tarWriter = tar.NewWriter(gzipWriter)
+// 	defer h.tarWriter.Close()
 
-	return nil
+// 	return nil
+// }
+
+// Restore JSON File handler (adds the entries to the json file)
+func (h *Handler) restFileAddEntries(headerName string, parentPath string) {
+	h.RestJSONFile.Slots[parentPath] = append(h.RestJSONFile.Slots[parentPath], headerName)
 }
 
 // pack the files
@@ -85,6 +95,8 @@ func (h *Handler) packFiles() error {
 			return err
 		}
 
+		// adding entries to the restore json file
+		h.restFileAddEntries(header.Name, strings.TrimSuffix(InputFile, header.Name))
 	}
 
 	return nil
@@ -108,7 +120,8 @@ func (h *Handler) packDirs() error {
 				return err
 			}
 
-			// header name set
+			// header name set TODO: see if this relative path extraction can
+			// be moved to manager
 			header.Name, err = filepath.Rel(filepath.Dir(dir), path)
 			if err != nil {
 				return err
@@ -132,12 +145,41 @@ func (h *Handler) packDirs() error {
 					return err
 				}
 			}
+
+			// adding entries to the restore json file TODO: optimisation of the removal string
+			h.restFileAddEntries(header.Name, strings.TrimSuffix(path, header.Name))
+
 			return nil
 		})
 
 		if err != nil {
 			return err
 		}
+
+	}
+
+	return nil
+}
+
+// function to pack restore json file
+func (h *Handler) packRestoreJSON() error {
+	JSONData, err := json.MarshalIndent(h.RestJSONFile, "", "	")
+	if err != nil {
+		return err
+	}
+
+	header := &tar.Header{
+		Name: "restoreFile.cbak.json",
+		Size: int64(len(JSONData)),
+		Mode: 0600,
+	}
+
+	if err := h.tarWriter.WriteHeader(header); err != nil {
+		return err
+	}
+
+	if _, err := h.tarWriter.Write(JSONData); err != nil {
+		return err
 	}
 
 	return nil
@@ -177,6 +219,11 @@ func (h *Handler) Pack() error {
 
 	// pack the directories
 	if err := h.packDirs(); err != nil {
+		return err
+	}
+
+	// pack restore json file
+	if err = h.packRestoreJSON(); err != nil {
 		return err
 	}
 

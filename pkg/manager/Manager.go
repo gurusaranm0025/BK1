@@ -22,7 +22,6 @@ import (
 // 4. Handle restore
 
 // Backup conf json file type
-
 type BakJSON struct {
 	BackupName  string
 	BackupPaths []string
@@ -42,6 +41,9 @@ func NewManager(inputData components.InputData) (*Manager, error) {
 	var err error
 
 	manager.InputData = inputData
+
+	// setting up restJSONFile in Handler
+	manager.Handler.RestJSONFile.Slots = make(map[string][]string)
 
 	// Getting home dir
 	manager.HomeDir, err = os.UserHomeDir()

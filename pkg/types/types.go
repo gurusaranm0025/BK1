@@ -29,3 +29,16 @@ type RTConfJSON struct {
 // 	RootCat      bool
 // 	RestoreSlots []*RestoreSlot
 // }
+
+// 2nd iter
+// //////
+
+// Restore conf json file type
+type RestSlot struct {
+	FolderName  string
+	RestorePath string
+}
+
+type RestJSON struct {
+	Slots map[string][]string
+}
