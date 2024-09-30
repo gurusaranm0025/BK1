@@ -1,4 +1,4 @@
-module gurusaranm0025/cb
+module gurusaranm0025/cbak
 
 go 1.23.0
 

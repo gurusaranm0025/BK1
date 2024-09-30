@@ -3,9 +3,9 @@ package backup
 import (
 	"encoding/json"
 	"fmt"
-	"gurusaranm0025/cb/pkg/conf"
-	"gurusaranm0025/cb/pkg/types"
-	"gurusaranm0025/cb/pkg/utils"
+	"gurusaranm0025/cbak/pkg/conf"
+	"gurusaranm0025/cbak/pkg/types"
+	"gurusaranm0025/cbak/pkg/utils"
 	"io"
 	"log/slog"
 	"os"

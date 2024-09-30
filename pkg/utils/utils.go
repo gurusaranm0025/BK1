@@ -2,7 +2,7 @@ package utils
 
 import (
 	"errors"
-	"gurusaranm0025/cb/pkg/conf"
+	"gurusaranm0025/cbak/pkg/conf"
 	"io"
 	"os"
 	"os/exec"
