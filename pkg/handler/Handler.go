@@ -3,25 +3,34 @@ package handler
 import (
 	"archive/tar"
 	"encoding/json"
+	"fmt"
 	"gurusaranm0025/cbak/pkg/types"
 	"io"
-	"io/fs"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/klauspost/compress/gzip"
 	"github.com/klauspost/compress/zstd"
 )
 
+type InputPaths struct {
+	Header tar.Header
+	Path   string
+	IsDir  bool `default:"false"`
+}
+
+type RestJSONFile struct {
+	RestJSON       types.RestJSON
+	RestFileHeader tar.Header
+}
+
 type Handler struct {
-	InputFiles   []string
-	InputFolders []string
+	InputFiles   []InputPaths
+	InputFolders []InputPaths
 	OutputFiles  []string //double check this is passed from the manager
 	tarWriter    *tar.Writer
 	tarReader    tar.Reader
 
-	RestJSONFile types.RestJSON
+	RestJSONFile RestJSONFile
 }
 
 // func (h *Handler) createWriters() error {
@@ -54,9 +63,9 @@ type Handler struct {
 // }
 
 // Restore JSON File handler (adds the entries to the json file)
-func (h *Handler) restFileAddEntries(headerName string, parentPath string) {
-	h.RestJSONFile.Slots[parentPath] = append(h.RestJSONFile.Slots[parentPath], headerName)
-}
+// func (h *Handler) restFileAddEntries(headerName string, parentPath string) {
+// 	h.RestJSONFile.Slots[parentPath] = append(h.RestJSONFile.Slots[parentPath], headerName)
+// }
 
 // pack the files
 func (h *Handler) packFiles() error {
@@ -64,39 +73,39 @@ func (h *Handler) packFiles() error {
 	for _, InputFile := range h.InputFiles {
 
 		// path checking
-		InputFileInfo, err := os.Stat(InputFile)
-		if err != nil {
-			return err
-		}
+		// InputFileInfo, err := os.Stat(InputFile)
+		// if err != nil {
+		// 	return err
+		// }
 
 		// header extraction
-		header, err := tar.FileInfoHeader(InputFileInfo, "")
-		if err != nil {
-			return err
-		}
+		// header, err := tar.FileInfoHeader(InputFileInfo, "")
+		// if err != nil {
+		// 	return err
+		// }
 
 		// header name set
-		header.Name = filepath.Base(InputFile)
+		// header.Name = filepath.Base(InputFile)
 
 		// write header
-		if err := h.tarWriter.WriteHeader(header); err != nil {
+		if err := h.tarWriter.WriteHeader(&InputFile.Header); err != nil {
 			return err
 		}
 
-		// open the input file
-		openedFile, err := os.Open(InputFile)
-		if err != nil {
-			return err
-		}
-		defer openedFile.Close()
+		if !InputFile.IsDir {
 
-		// copy the input file to the tar writer
-		if _, err = io.Copy(h.tarWriter, openedFile); err != nil {
-			return err
-		}
+			// open the input file
+			openedFile, err := os.Open(InputFile.Path)
+			if err != nil {
+				return err
+			}
+			defer openedFile.Close()
 
-		// adding entries to the restore json file
-		h.restFileAddEntries(header.Name, strings.TrimSuffix(InputFile, header.Name))
+			// copy the input file to the tar writer
+			if _, err = io.Copy(h.tarWriter, openedFile); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -106,56 +115,75 @@ func (h *Handler) packFiles() error {
 // packing directories
 func (h *Handler) packDirs() error {
 
-	for _, dir := range h.InputFolders {
-		// Walk-through the dirs
-		err := filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
-			// error checking
-			if err != nil {
-				return err
-			}
+	// for _, dir := range h.InputFolders {
+	// Walk-through the dirs
+	// err := filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
+	// 	// error checking
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-			// header ectraction
-			header, err := tar.FileInfoHeader(info, "")
-			if err != nil {
-				return err
-			}
+	// 	// header ectraction
+	// 	header, err := tar.FileInfoHeader(info, "")
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-			// header name set TODO: see if this relative path extraction can
-			// be moved to manager
-			header.Name, err = filepath.Rel(filepath.Dir(dir), path)
-			if err != nil {
-				return err
-			}
+	// 	// header name set TODO: see if this relative path extraction can
+	// 	// be moved to manager
+	// 	header.Name, err = filepath.Rel(filepath.Dir(dir), path)
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-			// writer the header
-			if err := h.tarWriter.WriteHeader(header); err != nil {
-				return err
-			}
+	// 	// writer the header
+	// 	if err := h.tarWriter.WriteHeader(header); err != nil {
+	// 		return err
+	// 	}
 
-			// open the input file
-			if !info.IsDir() {
-				openedFile, err := os.Open(path)
-				if err != nil {
-					return err
-				}
-				defer openedFile.Close()
+	// 	// open the input file
+	// 	if !info.IsDir() {
+	// 		openedFile, err := os.Open(path)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		defer openedFile.Close()
 
-				// copy the input file to the tar writer
-				if _, err := io.Copy(h.tarWriter, openedFile); err != nil {
-					return err
-				}
-			}
+	// 		// copy the input file to the tar writer
+	// 		if _, err := io.Copy(h.tarWriter, openedFile); err != nil {
+	// 			return err
+	// 		}
+	// 	}
 
-			// adding entries to the restore json file TODO: optimisation of the removal string
-			h.restFileAddEntries(header.Name, strings.TrimSuffix(path, header.Name))
+	// 	// adding entries to the restore json file TODO: optimisation of the removal string
+	// 	h.restFileAddEntries(header.Name, strings.TrimSuffix(path, header.Name))
 
-			return nil
-		})
+	// 	return nil
+	// })
 
-		if err != nil {
+	// if err != nil {
+	// 	return err
+	// }
+
+	// }
+
+	for _, file := range h.InputFolders {
+		fmt.Println(file.Path)
+		if err := h.tarWriter.WriteHeader(&file.Header); err != nil {
 			return err
 		}
 
+		if !file.IsDir {
+			openedFile, err := os.Open(file.Path)
+			if err != nil {
+				return err
+			}
+			defer openedFile.Close()
+
+			if _, err := io.Copy(h.tarWriter, openedFile); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -163,7 +191,7 @@ func (h *Handler) packDirs() error {
 
 // function to pack restore json file
 func (h *Handler) packRestoreJSON() error {
-	JSONData, err := json.MarshalIndent(h.RestJSONFile, "", "	")
+	JSONData, err := json.MarshalIndent(h.RestJSONFile.RestJSON, "", "	")
 	if err != nil {
 		return err
 	}
@@ -212,20 +240,21 @@ func (h *Handler) Pack() error {
 	h.tarWriter = tar.NewWriter(gzipWriter)
 	defer h.tarWriter.Close()
 
-	// pack the files
-	if err := h.packFiles(); err != nil {
-		return err
-	}
-
-	// pack the directories
-	if err := h.packDirs(); err != nil {
-		return err
-	}
-
 	// pack restore json file
 	if err = h.packRestoreJSON(); err != nil {
 		return err
 	}
+	fmt.Println(111)
+	// pack the files
+	if err := h.packFiles(); err != nil {
+		return err
+	}
+	fmt.Println(121)
+	// pack the directories
+	if err := h.packDirs(); err != nil {
+		return err
+	}
+	fmt.Println(112)
 
 	return nil
 }

@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"archive/tar"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"gurusaranm0025/cbak/pkg/conf"
 	"gurusaranm0025/cbak/pkg/handler"
 	"io"
+	"io/fs"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -43,7 +45,7 @@ func NewManager(inputData components.InputData) (*Manager, error) {
 	manager.InputData = inputData
 
 	// setting up restJSONFile in Handler
-	manager.Handler.RestJSONFile.Slots = make(map[string][]string)
+	manager.Handler.RestJSONFile.RestJSON.Slots = make(map[string][]string)
 
 	// Getting home dir
 	manager.HomeDir, err = os.UserHomeDir()
@@ -96,6 +98,11 @@ func (m *Manager) readBackupConfig() error {
 	return nil
 }
 
+// function to add entries in the restore json file
+func (m *Manager) restFileAddEntries(headerName, parentPath string) {
+	m.Handler.RestJSONFile.RestJSON.Slots[parentPath] = append(m.Handler.RestJSONFile.RestJSON.Slots[parentPath], headerName)
+}
+
 // common function for adding paths to the Handler
 func (m *Manager) addPathToHandler(path string) error {
 	// path checking
@@ -113,9 +120,65 @@ func (m *Manager) addPathToHandler(path string) error {
 
 	// appending path to handler data
 	if info.IsDir() {
-		m.Handler.InputFolders = append(m.Handler.InputFolders, absPath)
+		// Handling Directories
+		// m.Handler.InputFolders = append(m.Handler.InputFolders, absPath)
+
+		// Walking the directory
+		err = filepath.Walk(absPath, func(path string, fileInfo fs.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			// creating header for the files inside the directories
+			fileHeader, err := tar.FileInfoHeader(fileInfo, "")
+			if err != nil {
+				return err
+			}
+
+			// setting Header name
+			fileHeader.Name, err = filepath.Rel(filepath.Dir(absPath), path)
+			if err != nil {
+				return err
+			}
+
+			// adding headers and file paths inside the directory to the Handler
+			m.Handler.InputFiles = append(m.Handler.InputFiles, handler.InputPaths{
+				Header: *fileHeader,
+				Path:   path,
+				IsDir:  fileInfo.IsDir(),
+			})
+
+			// adding entries to the restore json file
+			m.restFileAddEntries(fileHeader.Name, strings.TrimSuffix(path, fileHeader.Name))
+
+			return nil
+		})
+
+		if err != nil {
+			return err
+		}
+
 	} else {
-		m.Handler.InputFiles = append(m.Handler.InputFiles, absPath)
+		// // Handling Files
+		// m.Handler.InputFiles = append(m.Handler.InputFiles, absPath)
+
+		// creating header for tarballing the file
+		fileHeader, err := tar.FileInfoHeader(info, "")
+		if err != nil {
+			return err
+		}
+
+		// setting header name
+		fileHeader.Name = filepath.Base(absPath)
+
+		// adding header and the path to the handler
+		m.Handler.InputFiles = append(m.Handler.InputFiles, handler.InputPaths{
+			Header: *fileHeader,
+			Path:   absPath,
+		})
+
+		// adding entries to the restore json file
+		m.restFileAddEntries(fileHeader.Name, strings.TrimSuffix(absPath, fileHeader.Name))
 	}
 
 	return nil
