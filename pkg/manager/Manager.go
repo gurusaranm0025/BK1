@@ -18,9 +18,6 @@ import (
 )
 
 // TODO:
-// 1. Handle input file names
-// 2. handle output file names
-// 3. Handle backup
 // 4. Handle restore
 
 // Backup conf json file type
@@ -45,7 +42,7 @@ func NewManager(inputData components.InputData) (*Manager, error) {
 	manager.InputData = inputData
 
 	// setting up restJSONFile in Handler
-	manager.Handler.RestJSONFile.RestJSON.Slots = make(map[string][]string)
+	manager.Handler.RestJSONFile.Slots = make(map[string][]string)
 
 	// Getting home dir
 	manager.HomeDir, err = os.UserHomeDir()
@@ -62,6 +59,7 @@ func NewManager(inputData components.InputData) (*Manager, error) {
 	return &manager, nil
 }
 
+// TODO: backup config file checking needed
 // Backup Config File Functions
 func (m *Manager) readBackupConfig() error {
 
@@ -100,7 +98,7 @@ func (m *Manager) readBackupConfig() error {
 
 // function to add entries in the restore json file
 func (m *Manager) restFileAddEntries(headerName, parentPath string) {
-	m.Handler.RestJSONFile.RestJSON.Slots[parentPath] = append(m.Handler.RestJSONFile.RestJSON.Slots[parentPath], headerName)
+	m.Handler.RestJSONFile.Slots[parentPath] = append(m.Handler.RestJSONFile.Slots[parentPath], headerName)
 }
 
 // common function for adding paths to the Handler
@@ -120,9 +118,6 @@ func (m *Manager) addPathToHandler(path string) error {
 
 	// appending path to handler data
 	if info.IsDir() {
-		// Handling Directories
-		// m.Handler.InputFolders = append(m.Handler.InputFolders, absPath)
-
 		// Walking the directory
 		err = filepath.Walk(absPath, func(path string, fileInfo fs.FileInfo, err error) error {
 			if err != nil {
