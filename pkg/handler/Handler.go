@@ -13,7 +13,7 @@ import (
 )
 
 type InputPaths struct {
-	Header tar.Header
+	Header *tar.Header
 	Path   string
 	IsDir  bool `default:"false"`
 }
@@ -31,7 +31,7 @@ type Handler struct {
 func (h *Handler) packFiles() error {
 
 	for _, InputFile := range h.InputFiles {
-		if err := h.tarWriter.WriteHeader(&InputFile.Header); err != nil {
+		if err := h.tarWriter.WriteHeader(InputFile.Header); err != nil {
 			return err
 		}
 
@@ -80,7 +80,9 @@ func (h *Handler) packRestoreJSON() error {
 }
 
 func (h *Handler) Pack() error {
-	// creating tar and other writers
+
+	//////// creating tar and other writers
+
 	// Creating a output file
 	outFile, err := os.Create(h.OutputFiles[0] + ".cb")
 	if err != nil {
@@ -88,21 +90,21 @@ func (h *Handler) Pack() error {
 	}
 	defer outFile.Close()
 
-	// Cerating zstd writer
+	//// Cerating zstd writer
 	zstdWriter, err := zstd.NewWriter(outFile)
 	if err != nil {
 		return err
 	}
 	defer zstdWriter.Close()
 
-	// creating gzip writer
+	//// creating gzip writer
 	gzipWriter, err := gzip.NewWriterLevel(zstdWriter, gzip.BestCompression)
 	if err != nil {
 		return err
 	}
 	defer gzipWriter.Close()
 
-	// creating tar writer
+	//// creating tar writer
 	h.tarWriter = tar.NewWriter(gzipWriter)
 	defer h.tarWriter.Close()
 

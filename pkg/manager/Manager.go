@@ -61,21 +61,21 @@ func NewManager(inputData components.InputData) (*Manager, error) {
 
 // TODO: backup config file checking needed
 // Backup Config File Functions
-func (m *Manager) readBackupConfig() error {
+func (man *Manager) readBackupConfig() error {
 
 	// checking config path
-	info, err := os.Stat(m.InputData.BackupData.ConfPath)
+	info, err := os.Stat(man.InputData.BackupData.ConfPath)
 	if err != nil {
 		return err
 	}
 
 	// making sure path is a file
 	if info.IsDir() {
-		return fmt.Errorf("%s is a directory not a file", m.InputData.BackupData.ConfPath)
+		return fmt.Errorf("%s is a directory not a file", man.InputData.BackupData.ConfPath)
 	}
 
 	// opening the config file
-	bakJSONFile, err := os.Open(m.InputData.BackupData.ConfPath)
+	bakJSONFile, err := os.Open(man.InputData.BackupData.ConfPath)
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func (m *Manager) readBackupConfig() error {
 	}
 
 	// unmarshalling the config file
-	err = json.Unmarshal(fileByteValue, &m.BackupConfig)
+	err = json.Unmarshal(fileByteValue, &man.BackupConfig)
 	if err != nil {
 		return err
 	}
@@ -97,12 +97,12 @@ func (m *Manager) readBackupConfig() error {
 }
 
 // function to add entries in the restore json file
-func (m *Manager) restFileAddEntries(headerName, parentPath string) {
-	m.Handler.RestJSONFile.Slots[parentPath] = append(m.Handler.RestJSONFile.Slots[parentPath], headerName)
+func (man *Manager) restFileAddEntries(headerName, parentPath string) {
+	man.Handler.RestJSONFile.Slots[parentPath] = append(man.Handler.RestJSONFile.Slots[parentPath], headerName)
 }
 
 // common function for adding paths to the Handler
-func (m *Manager) addPathToHandler(path string) error {
+func (man *Manager) addPathToHandler(path string) error {
 	// path checking
 	info, err := os.Stat(path)
 	if err != nil {
@@ -118,6 +118,7 @@ func (m *Manager) addPathToHandler(path string) error {
 
 	// appending path to handler data
 	if info.IsDir() {
+		// handling directories
 		// Walking the directory
 		err = filepath.Walk(absPath, func(path string, fileInfo fs.FileInfo, err error) error {
 			if err != nil {
@@ -137,14 +138,14 @@ func (m *Manager) addPathToHandler(path string) error {
 			}
 
 			// adding headers and file paths inside the directory to the Handler
-			m.Handler.InputFiles = append(m.Handler.InputFiles, handler.InputPaths{
-				Header: *fileHeader,
+			man.Handler.InputFiles = append(man.Handler.InputFiles, handler.InputPaths{
+				Header: fileHeader,
 				Path:   path,
 				IsDir:  fileInfo.IsDir(),
 			})
 
 			// adding entries to the restore json file
-			m.restFileAddEntries(fileHeader.Name, strings.TrimSuffix(path, fileHeader.Name))
+			man.restFileAddEntries(fileHeader.Name, strings.TrimSuffix(path, fileHeader.Name))
 
 			return nil
 		})
@@ -154,8 +155,7 @@ func (m *Manager) addPathToHandler(path string) error {
 		}
 
 	} else {
-		// // Handling Files
-		// m.Handler.InputFiles = append(m.Handler.InputFiles, absPath)
+		// Handling Files
 
 		// creating header for tarballing the file
 		fileHeader, err := tar.FileInfoHeader(info, "")
@@ -167,127 +167,127 @@ func (m *Manager) addPathToHandler(path string) error {
 		fileHeader.Name = filepath.Base(absPath)
 
 		// adding header and the path to the handler
-		m.Handler.InputFiles = append(m.Handler.InputFiles, handler.InputPaths{
-			Header: *fileHeader,
+		man.Handler.InputFiles = append(man.Handler.InputFiles, handler.InputPaths{
+			Header: fileHeader,
 			Path:   absPath,
 		})
 
 		// adding entries to the restore json file
-		m.restFileAddEntries(fileHeader.Name, strings.TrimSuffix(absPath, fileHeader.Name))
+		man.restFileAddEntries(fileHeader.Name, strings.TrimSuffix(absPath, fileHeader.Name))
 	}
 
 	return nil
 }
 
 // common function for managing backup tags (takes the tags array as input)
-func (m *Manager) addTags(tags []string) error {
+func (man *Manager) addTags(tags []string) error {
 	for _, tag := range tags {
 		var path string
 
 		// adding home dir to under home paths
 		if conf.ModesMap[tag].IsUnderHome {
-			path = filepath.Join(m.HomeDir, conf.ModesMap[tag].Path)
+			path = filepath.Join(man.HomeDir, conf.ModesMap[tag].Path)
 		} else {
 			path = conf.ModesMap[tag].Path
 		}
 
 		// adding path to the Handler
-		if err := m.addPathToHandler(path); err != nil {
+		if err := man.addPathToHandler(path); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (m *Manager) evalBackupConfig() error {
+func (man *Manager) evalBackupConfig() error {
 	// Evaluating backup name
-	if !(len(m.BackupConfig.BackupName) > 0) {
-		m.BackupConfig.BackupName = filepath.Base(m.InputData.BackupData.ConfPath)
-		m.BackupConfig.BackupName = strings.TrimSuffix(m.BackupConfig.BackupName, ".json")
+	if !(len(man.BackupConfig.BackupName) > 0) {
+		man.BackupConfig.BackupName = filepath.Base(man.InputData.BackupData.ConfPath)
+		man.BackupConfig.BackupName = strings.TrimSuffix(man.BackupConfig.BackupName, ".json")
 	}
 
 	// Evaluating backup paths in the config file
-	if !(len(m.BackupConfig.BackupPaths) > 0) {
-		slog.Info(fmt.Sprintf("No backup paths mentioned in the backup config file ==> %s. And procedding with backup.", m.InputData.BackupData.ConfPath))
-	} else if len(m.BackupConfig.BackupPaths) > 0 {
-		for _, path := range m.BackupConfig.BackupPaths {
+	if !(len(man.BackupConfig.BackupPaths) > 0) {
+		slog.Info(fmt.Sprintf("No backup paths mentioned in the backup config file ==> %s. And procedding with backup.", man.InputData.BackupData.ConfPath))
+	} else if len(man.BackupConfig.BackupPaths) > 0 {
+		for _, path := range man.BackupConfig.BackupPaths {
 
 			// adding path to the handler
-			if err := m.addPathToHandler(path); err != nil {
+			if err := man.addPathToHandler(path); err != nil {
 				return err
 			}
 		}
 	} else {
-		return fmt.Errorf("unknown error occurred with backup config file %s. This error was never supposed to be come, if it is then something very strange is going on", m.InputData.BackupData.ConfPath)
+		return fmt.Errorf("unknown error occurred with backup config file %s. This error was never supposed to be come, if it is then something very strange is going on", man.InputData.BackupData.ConfPath)
 	}
 
 	// Evaluating backup tags in the file
-	if !(len(m.BackupConfig.Tags) > 0) {
-		slog.Info(fmt.Sprintf("No tags mentioned in the backup config file ==> %s. And procedding with backup.", m.InputData.BackupData.ConfPath))
-	} else if len(m.BackupConfig.Tags) > 0 {
+	if !(len(man.BackupConfig.Tags) > 0) {
+		slog.Info(fmt.Sprintf("No tags mentioned in the backup config file ==> %s. And procedding with backup.", man.InputData.BackupData.ConfPath))
+	} else if len(man.BackupConfig.Tags) > 0 {
 		// adding tags to Handler data
-		if err := m.addTags(m.BackupConfig.Tags); err != nil {
+		if err := man.addTags(man.BackupConfig.Tags); err != nil {
 			return err
 		}
 	} else {
-		return fmt.Errorf("unknown error occurred with backup config file %s. This error was never supposed to be come, if it is then something very strange is going on", m.InputData.BackupData.ConfPath)
+		return fmt.Errorf("unknown error occurred with backup config file %s. This error was never supposed to be come, if it is then something very strange is going on", man.InputData.BackupData.ConfPath)
 	}
 
 	return nil
 }
 
 // Evaluating the path which needs to be **baked** up
-func (m *Manager) evalInputFilePath() error {
+func (man *Manager) evalInputFilePath() error {
 
-	if !(len(m.InputData.BackupData.InputPath) > 0) {
-		if !m.InputData.BackupData.UseConf && !(len(m.InputData.BackupData.Tags) > 0) {
+	if !(len(man.InputData.BackupData.InputPath) > 0) {
+		if !man.InputData.BackupData.UseConf && !(len(man.InputData.BackupData.Tags) > 0) {
 			return fmt.Errorf("no paths or tags are given for taking backup")
 		}
-	} else if len(m.InputData.BackupData.InputPath) > 0 {
-		path := m.InputData.BackupData.InputPath
+	} else if len(man.InputData.BackupData.InputPath) > 0 {
+		path := man.InputData.BackupData.InputPath
 
 		// adding the path to the Handler data
-		if err := m.addPathToHandler(path); err != nil {
+		if err := man.addPathToHandler(path); err != nil {
 			return err
 		}
 	} else {
-		return fmt.Errorf("unknown error occurred with the file in input path %s. This error was never supposed to be come, if it is then something very strange is going on", m.InputData.BackupData.InputPath)
+		return fmt.Errorf("unknown error occurred with the file in input path %s. This error was never supposed to be come, if it is then something very strange is going on", man.InputData.BackupData.InputPath)
 	}
 
 	return nil
 }
 
-func (m *Manager) evalTags() error {
+func (man *Manager) evalTags() error {
 
-	if !(len(m.InputData.BackupData.Tags) > 0) {
-		if !m.InputData.BackupData.UseConf && !(len(m.InputData.BackupData.InputPath) > 0) {
+	if !(len(man.InputData.BackupData.Tags) > 0) {
+		if !man.InputData.BackupData.UseConf && !(len(man.InputData.BackupData.InputPath) > 0) {
 			return fmt.Errorf("no paths or tags are given for taking backup")
 		}
-	} else if len(m.InputData.BackupData.Tags) > 0 {
+	} else if len(man.InputData.BackupData.Tags) > 0 {
 		// adding tags to the Handler data
-		if err := m.addTags(m.InputData.BackupData.Tags); err != nil {
+		if err := man.addTags(man.InputData.BackupData.Tags); err != nil {
 			return err
 		}
 	} else {
-		return fmt.Errorf("unknown error occurred with the tags '%s'. This error was never supposed to be come, if it is then something very strange is going on", m.InputData.BackupData.Tags)
+		return fmt.Errorf("unknown error occurred with the tags '%s'. This error was never supposed to be come, if it is then something very strange is going on", man.InputData.BackupData.Tags)
 	}
 
 	return nil
 }
 
 // Evaluating the given output path
-func (m *Manager) evalOutputFiles() error {
+func (man *Manager) evalOutputFiles() error {
 	// Checking the output path and output file name
-	if !(len(m.InputData.BackupData.OutputPath) > 0) {
+	if !(len(man.InputData.BackupData.OutputPath) > 0) {
 		// Is Confif file given
-		if !m.InputData.BackupData.UseConf {
+		if !man.InputData.BackupData.UseConf {
 			// no config file then name based on current time
-			m.Handler.OutputFiles = []string{filepath.Join(m.CWD, "Backup"+time.Now().Format("20060102150405"))}
+			man.Handler.OutputFiles = []string{filepath.Join(man.CWD, "Backup"+time.Now().Format("20060102150405"))}
 			return nil
 		} else {
 			// using a config
 			// Backup file name from the config
-			path := filepath.Join(m.CWD, m.BackupConfig.BackupName)
+			path := filepath.Join(man.CWD, man.BackupConfig.BackupName)
 
 			// getting the abspath
 			abspath, err := filepath.Abs(path)
@@ -300,7 +300,7 @@ func (m *Manager) evalOutputFiles() error {
 			info, err := os.Stat(abspath)
 			// file doesn't exist NO ISSUES
 			if err == os.ErrNotExist {
-				m.Handler.OutputFiles = []string{abspath}
+				man.Handler.OutputFiles = []string{abspath}
 				return nil
 			}
 
@@ -319,22 +319,22 @@ func (m *Manager) evalOutputFiles() error {
 			}
 
 			// seeting Handler data
-			m.Handler.OutputFiles = []string{abspath}
+			man.Handler.OutputFiles = []string{abspath}
 		}
 	} else {
 		// output path is given
 		// getting absolute path
-		abspath, err := filepath.Abs(m.InputData.BackupData.OutputPath)
+		abspath, err := filepath.Abs(man.InputData.BackupData.OutputPath)
 		if err != nil {
 			slog.Warn("Error getting absolute path for output file, proceeding with relative path.")
-			abspath = m.InputData.BackupData.OutputPath
+			abspath = man.InputData.BackupData.OutputPath
 		}
 
 		// checking the path
 		info, err := os.Stat(abspath)
 		// file doesn't exit. NO ISSUES
 		if err == os.ErrNotExist {
-			m.Handler.OutputFiles = []string{abspath}
+			man.Handler.OutputFiles = []string{abspath}
 			return nil
 		}
 
@@ -353,50 +353,50 @@ func (m *Manager) evalOutputFiles() error {
 		}
 
 		// setting Handler data
-		m.Handler.OutputFiles = []string{abspath}
+		man.Handler.OutputFiles = []string{abspath}
 	}
 
 	return nil
 }
 
-func (m *Manager) Manage() error {
-	if m.InputData.IsBackup {
+func (man *Manager) Manage() error {
+	if man.InputData.IsBackup {
 		slog.Info("its backup")
 		// Config file
-		if m.InputData.BackupData.UseConf {
+		if man.InputData.BackupData.UseConf {
 			// reading backup config file
-			if err := m.readBackupConfig(); err != nil {
+			if err := man.readBackupConfig(); err != nil {
 				return err
 			}
 
 			// Evaluating backup config file
-			if err := m.evalBackupConfig(); err != nil {
+			if err := man.evalBackupConfig(); err != nil {
 				return err
 			}
 		}
 		slog.Info("no conf")
 		// Evaluating the input path
-		if err := m.evalInputFilePath(); err != nil {
+		if err := man.evalInputFilePath(); err != nil {
 			return err
 		}
 		slog.Info("no input")
 
 		// Evaluating the tags from the CLI
-		if err := m.evalTags(); err != nil {
+		if err := man.evalTags(); err != nil {
 			return err
 		}
 
 		// Evaluating the output path
-		if err := m.evalOutputFiles(); err != nil {
+		if err := man.evalOutputFiles(); err != nil {
 			return err
 		}
 
 		// Handling Handler: PACKING
-		if err := m.Handler.Pack(); err != nil {
+		if err := man.Handler.Pack(); err != nil {
 			return err
 		}
 
-	} else if m.InputData.IsRestore {
+	} else if man.InputData.IsRestore {
 		// WORK IN PROGRESS
 	} else {
 		return errors.New("define a mode ('B' for bakup and 'R' for restore)")
