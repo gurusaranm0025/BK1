@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"gurusaranm0025/cbak/pkg/backup"
 	"gurusaranm0025/cbak/pkg/components"
 	"gurusaranm0025/cbak/pkg/manager"
@@ -20,42 +19,58 @@ func main() {
 	flag.BoolVar(&InputData.IsBackup, "B", false, "takes backup.")
 
 	// Tag Flags
+	// Backup flags
 	flag.BoolFunc("hypr", "takes backup of hyprland conf folder", func(s string) error {
 		InputData.BackupData.Tags = append(InputData.BackupData.Tags, "hypr")
+		InputData.IsBackup = true
 		return nil
 	})
 	flag.BoolFunc("rofi", "takes backup of rofi conf folder", func(s string) error {
 		InputData.BackupData.Tags = append(InputData.BackupData.Tags, "rofi")
+		InputData.IsBackup = true
 		return nil
 	})
 	flag.BoolFunc("waybar", "takes backup of waybar conf folder", func(s string) error {
 		InputData.BackupData.Tags = append(InputData.BackupData.Tags, "waybar")
+		InputData.IsBackup = true
 		return nil
 	})
 	flag.BoolFunc("wlogout", "takes backup of wlogout conf folder", func(s string) error {
 		InputData.BackupData.Tags = append(InputData.BackupData.Tags, "wlogout")
+		InputData.IsBackup = true
 		return nil
 	})
 	flag.BoolFunc("dunst", "takes backup of dunst conf folder", func(s string) error {
 		InputData.BackupData.Tags = append(InputData.BackupData.Tags, "dunst")
+		InputData.IsBackup = true
 		return nil
 	})
 
-	// Input Path
+	// // Input Path
 	flag.StringVar(&InputData.BackupData.InputPath, "path", "", "the path which you want to take backup")
 
-	// Output Path
+	// // Output Path
 	flag.StringVar(&InputData.BackupData.OutputPath, "o", "", "where to save the backup (default is the currnet working directory)")
 
-	// Backup config file
+	// // // Validating the input path and output path and setting backup mode
+	if (len(InputData.BackupData.InputPath) > 0) || (len(InputData.BackupData.OutputPath) > 0) {
+		InputData.IsBackup = true
+	}
+
+	// // Backup config file
 	flag.StringVar(&InputData.BackupData.ConfPath, "bak-conf", "", "the path to the config file for taking backup.")
 	if len(InputData.BackupData.ConfPath) > 0 {
 		InputData.BackupData.UseConf = true
+		InputData.IsBackup = true
+	}
+
+	// Restore flags
+	flag.StringVar(&InputData.RestoreData.FilePath, "r", "", "give the path to the backed up file, and it will restore that backup")
+	if len(InputData.RestoreData.FilePath) > 0 {
+		InputData.IsRestore = true
 	}
 
 	flag.Parse()
-
-	fmt.Println(InputData)
 
 	manager, err := manager.NewManager(InputData)
 	if err != nil {

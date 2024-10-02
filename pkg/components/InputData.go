@@ -14,7 +14,6 @@ type InputData struct {
 		Tags       []string
 	}
 	RestoreData struct {
-		WorkInProgress any
-		// WORK IN PROGRESS
+		FilePath string
 	}
 }
