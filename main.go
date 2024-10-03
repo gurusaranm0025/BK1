@@ -43,7 +43,7 @@ func main() {
 		Use:   "cbak",
 		Short: "yet another tool take backups",
 		Long:  "a tool to take backups of config files and to restore them",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 
 			// check for tags
 			InputData.BackupData.Tags = checkTags(InputTagsP)
@@ -71,20 +71,14 @@ func main() {
 
 			manager, err := manager.NewManager(InputData)
 			if err != nil {
-				slog.Error(err.Error())
-				os.Exit(1)
-				return
+				return err
 			}
 
 			if err := manager.Manage(); err != nil {
-				fmt.Println(InputData)
-				slog.Error(err.Error())
-				os.Exit(1)
-				return
+				return err
 			}
 
-			os.Exit(0)
-
+			return nil
 		},
 	}
 
@@ -106,7 +100,10 @@ func main() {
 	rootCMD.Flags().StringVarP(&InputData.RestoreData.FilePath, "restore", "R", "", "give the path to the backed up file, and it will restore that backup")
 
 	if err := rootCMD.Execute(); err != nil {
-		fmt.Println(err)
+		slog.Error(err.Error())
 		os.Exit(1)
+		return
 	}
+
+	os.Exit(0)
 }

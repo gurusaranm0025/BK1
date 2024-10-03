@@ -35,10 +35,10 @@ type RTConfJSON struct {
 
 // Restore conf json file type
 type RestSlot struct {
-	FolderName  string
-	RestorePath string
+	HeaderName string
+	ParentPath string
 }
 
 type RestJSON struct {
-	Slots map[string][]string
+	Slots map[string]RestSlot
 }

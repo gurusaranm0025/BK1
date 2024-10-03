@@ -7,6 +7,8 @@ import (
 	"gurusaranm0025/cbak/pkg/types"
 	"io"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/klauspost/compress/gzip"
 	"github.com/klauspost/compress/zstd"
@@ -24,6 +26,7 @@ type Handler struct {
 	RestoreFilePath string
 	tarWriter       *tar.Writer
 	tarReader       *tar.Reader
+	HomeDir         string
 
 	RestJSONFile types.RestJSON
 }
@@ -58,21 +61,25 @@ func (h *Handler) packFiles() error {
 
 // function to pack restore json file
 func (h *Handler) packRestoreJSON() error {
+	// getting json []byte data
 	JSONData, err := json.MarshalIndent(h.RestJSONFile, "", "	")
 	if err != nil {
 		return err
 	}
 
+	// creating a header for the restore json file
 	header := &tar.Header{
 		Name: "restoreFile.cbak.json",
 		Size: int64(len(JSONData)),
 		Mode: 0600,
 	}
 
+	// writing the header
 	if err := h.tarWriter.WriteHeader(header); err != nil {
 		return err
 	}
 
+	// writing the json content
 	if _, err := h.tarWriter.Write(JSONData); err != nil {
 		return err
 	}
@@ -113,12 +120,11 @@ func (h *Handler) Pack() error {
 	if err = h.packRestoreJSON(); err != nil {
 		return err
 	}
-	fmt.Println(111)
+
 	// pack the files
 	if err := h.packFiles(); err != nil {
 		return err
 	}
-	fmt.Println(121)
 
 	return nil
 }
@@ -127,34 +133,76 @@ func (h *Handler) Pack() error {
 
 // reading the restore.cbak.json
 func (han *Handler) readRestoreJSON() error {
-
 	// getting header
 	header, err := han.tarReader.Next()
 	if err != nil {
 		return err
 	}
 
-	// Decoding the json data
-	var JSONData []byte
-
-	if header.Name == "restore.cbak.json" {
-		if err := json.NewDecoder(han.tarReader).Decode(&JSONData); err != nil {
+	// Decoding and Unmarshalling the json data
+	if header.Name == "restoreFile.cbak.json" {
+		if err := json.NewDecoder(han.tarReader).Decode(&han.RestJSONFile); err != nil {
 			return err
 		}
 	}
 
-	// Unmarshalling the json data
-	err = json.Unmarshal(JSONData, &han.RestJSONFile)
-	if err != nil {
-		return err
-	}
+	return nil
+}
 
-	// checking
-	fmt.Println(han.RestJSONFile)
+// function to restore the files
+func (han *Handler) unPackFiles() error {
+	for {
+		// getting the headers from the backed up file
+		header, err := han.tarReader.Next()
+
+		// ending the loop when the file ends
+		if err == io.EOF {
+			break
+		}
+
+		// error checking
+		if err != nil {
+			return err
+		}
+
+		// getting the slot for the current file
+		currentSlot := han.RestJSONFile.Slots[header.Name]
+
+		// getting parent path for the current file
+		parentPath := strings.Replace(currentSlot.ParentPath, "#/HomeDir#/", han.HomeDir, 1)
+
+		// getting the fullpath for the file
+		fullPath := filepath.Join(parentPath, currentSlot.HeaderName)
+
+		// if entry is a directory, then create the directory
+		if header.FileInfo().IsDir() {
+			fmt.Printf("Created directory %s\n", fullPath)
+			if err := os.MkdirAll(fullPath, os.ModePerm); err != nil {
+				return err
+			}
+			continue
+		}
+
+		// if it is a file, create the file or overwrite the file
+		outFile, err := os.Create(fullPath)
+		if err != nil {
+			return err
+		}
+		defer outFile.Close()
+
+		// copy the contents to the file
+		if _, err = io.Copy(outFile, han.tarReader); err != nil {
+			return err
+		}
+
+		// printing a message
+		fmt.Printf("Extracted %s\n", fullPath)
+	}
 
 	return nil
 }
 
+// function for restoring the backed up files
 func (han *Handler) UnPack() error {
 
 	// opening the file
@@ -181,6 +229,11 @@ func (han *Handler) UnPack() error {
 
 	// Reading the restore.cbak.json file
 	if err := han.readRestoreJSON(); err != nil {
+		return err
+	}
+
+	// unpacking the tarball
+	if err := han.unPackFiles(); err != nil {
 		return err
 	}
 

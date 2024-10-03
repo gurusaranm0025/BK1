@@ -1,7 +1,9 @@
 hyprone
 go.sum
-Backup*
-hyprone.bak.conf
 vendor
 cbak
+
+hyprone.bak.conf
+Backup*
 cb
+rofiBackup*
