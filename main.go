@@ -61,6 +61,11 @@ func main() {
 				InputData.IsRestore = true
 			}
 
+			// validating extract flag
+			if len(InputData.ExtractData.Path) > 0 {
+				InputData.IsExtract = true
+			}
+
 			manager, err := manager.NewManager(InputData)
 			if err != nil {
 				return err
@@ -91,6 +96,9 @@ func main() {
 	// Restore from the backed up file
 	rootCMD.Flags().StringVarP(&InputData.RestoreData.FilePath, "restore", "R", "", "give the path to the backed up file, and it will restore that backup")
 
+	// flag for extracting the file
+	rootCMD.Flags().StringVarP(&InputData.ExtractData.Path, "extract", "E", "", "extracts the backed up file in the cuurent folder to view")
+
 	if err := rootCMD.Execute(); err != nil {
 		slog.Error(err.Error())
 		os.Exit(1)
@@ -101,5 +109,4 @@ func main() {
 }
 
 // TODOS
-// 0. checking file based backup
 // 1. adding a method to extract the backed up folder

@@ -397,6 +397,28 @@ func (man *Manager) evalRestFilePath() error {
 	return nil
 }
 
+// function for managing extract flag
+func (man *Manager) evalExtractPath() error {
+	// absolute path checking
+	man.InputData.ExtractData.Path = man.convertPathToAbs(man.InputData.ExtractData.Path)
+
+	// path checking
+	fileInfo, err := os.Stat(man.InputData.ExtractData.Path)
+	if err != nil {
+		return err
+	}
+
+	// is it a directory!!
+	if fileInfo.IsDir() {
+		return errors.New("the given path is a directory, not a file")
+	}
+
+	// adding path to the handler
+	man.Handler.RestoreFilePath = man.InputData.ExtractData.Path
+
+	return nil
+}
+
 func (man *Manager) Manage() error {
 	// IsBackup ==> true
 	if man.InputData.IsBackup {
@@ -432,11 +454,11 @@ func (man *Manager) Manage() error {
 			return err
 		}
 
+		return nil
 	}
 
 	// IsRestore ==> true
 	if man.InputData.IsRestore {
-		// working
 		// Evaluating the Restore File Path
 		if err := man.evalRestFilePath(); err != nil {
 			return err
@@ -446,8 +468,19 @@ func (man *Manager) Manage() error {
 		if err := man.Handler.UnPack(); err != nil {
 			return err
 		}
-	} else {
-		return errors.New("define a mode ('B' for bakup and 'R' for restore)")
+
+		return nil
 	}
-	return nil
+
+	if man.InputData.IsExtract {
+		// IsExtract ==> true
+
+		if err := man.evalExtractPath(); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return errors.New("define a mode ('E' for extracting and 'R' for restoring from the backup file)")
 }

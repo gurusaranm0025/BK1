@@ -6,6 +6,7 @@ import "archive/tar"
 type InputData struct {
 	IsBackup   bool
 	IsRestore  bool
+	IsExtract  bool
 	BackupData struct {
 		UseConf    bool
 		ConfPath   string
@@ -15,6 +16,9 @@ type InputData struct {
 	}
 	RestoreData struct {
 		FilePath string
+	}
+	ExtractData struct {
+		Path string
 	}
 }
 
