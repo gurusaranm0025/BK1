@@ -17,9 +17,11 @@ var ModesPath = struct {
 }
 
 type Mode struct {
+	IsTrue      bool
 	Name        string
 	Path        string
 	Tag         string
+	TagID       int
 	IsUnderHome bool
 	IsFile      bool
 }
@@ -27,6 +29,7 @@ type Mode struct {
 type ModesMapItem struct {
 	Path        string
 	Tag         string
+	TagID       int
 	IsUnderHome bool
 	IsDir       bool
 }
@@ -35,39 +38,44 @@ var ModesMap = map[string]*ModesMapItem{
 	"hypr": {
 		Path:        ModesPath.Hyprland,
 		Tag:         "h",
+		TagID:       0,
 		IsUnderHome: true,
 		IsDir:       true,
 	},
 	"rofi": {
 		Path:        ModesPath.Rofi,
 		Tag:         "r",
+		TagID:       1,
 		IsUnderHome: true,
 		IsDir:       true,
 	},
 	"waybar": {
 		Path:        ModesPath.Waybar,
 		Tag:         "wb",
+		TagID:       2,
 		IsUnderHome: true,
 		IsDir:       true,
 	},
 	"wlogout": {
 		Path:        ModesPath.Wlogout,
 		Tag:         "wl",
+		TagID:       3,
 		IsUnderHome: true,
 		IsDir:       true,
 	},
 	"dunst": {
 		Path:        ModesPath.Dunst,
 		Tag:         "d",
+		TagID:       4,
 		IsUnderHome: true,
 		IsDir:       true,
 	},
 }
 
 var Modes = []Mode{
-	{Name: "hypr", Path: ModesPath.Hyprland, Tag: "h", IsUnderHome: true, IsFile: false},
-	{Name: "rofi", Path: ModesPath.Rofi, Tag: "r", IsUnderHome: true, IsFile: false},
-	{Name: "waybar", Path: ModesPath.Waybar, Tag: "wb", IsUnderHome: true, IsFile: false},
-	{Name: "wlogout", Path: ModesPath.Wlogout, Tag: "wl", IsUnderHome: true, IsFile: false},
-	{Name: "dunst", Path: ModesPath.Dunst, Tag: "d", IsUnderHome: true, IsFile: false},
+	{IsTrue: false, Name: "hypr", Path: ModesPath.Hyprland, Tag: "h", TagID: 0, IsUnderHome: true, IsFile: false},
+	{IsTrue: false, Name: "rofi", Path: ModesPath.Rofi, Tag: "r", TagID: 1, IsUnderHome: true, IsFile: false},
+	{IsTrue: false, Name: "waybar", Path: ModesPath.Waybar, Tag: "wb", TagID: 2, IsUnderHome: true, IsFile: false},
+	{IsTrue: false, Name: "wlogout", Path: ModesPath.Wlogout, Tag: "wl", TagID: 3, IsUnderHome: true, IsFile: false},
+	{IsTrue: false, Name: "dunst", Path: ModesPath.Dunst, Tag: "d", TagID: 4, IsUnderHome: true, IsFile: false},
 }

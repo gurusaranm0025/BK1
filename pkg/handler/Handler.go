@@ -19,10 +19,11 @@ type InputPaths struct {
 }
 
 type Handler struct {
-	InputFiles  []InputPaths
-	OutputFiles []string //double check this is passed from the manager
-	tarWriter   *tar.Writer
-	tarReader   *tar.Reader
+	InputFiles      []InputPaths
+	OutputFiles     []string //double check this is passed from the manager
+	RestoreFilePath string
+	tarWriter       *tar.Writer
+	tarReader       *tar.Reader
 
 	RestJSONFile types.RestJSON
 }
@@ -122,4 +123,66 @@ func (h *Handler) Pack() error {
 	return nil
 }
 
-func (h *Handler) UnPack() {}
+// // // // Functions for unpacking
+
+// reading the restore.cbak.json
+func (han *Handler) readRestoreJSON() error {
+
+	// getting header
+	header, err := han.tarReader.Next()
+	if err != nil {
+		return err
+	}
+
+	// Decoding the json data
+	var JSONData []byte
+
+	if header.Name == "restore.cbak.json" {
+		if err := json.NewDecoder(han.tarReader).Decode(&JSONData); err != nil {
+			return err
+		}
+	}
+
+	// Unmarshalling the json data
+	err = json.Unmarshal(JSONData, &han.RestJSONFile)
+	if err != nil {
+		return err
+	}
+
+	// checking
+	fmt.Println(han.RestJSONFile)
+
+	return nil
+}
+
+func (han *Handler) UnPack() error {
+
+	// opening the file
+	restFile, err := os.Open(han.RestoreFilePath)
+	if err != nil {
+		return err
+	}
+	defer restFile.Close()
+
+	// // // // Creating readers
+	zstdReader, err := zstd.NewReader(restFile)
+	if err != nil {
+		return err
+	}
+	defer zstdReader.Close()
+
+	gzipReader, err := gzip.NewReader(zstdReader)
+	if err != nil {
+		return err
+	}
+	defer gzipReader.Close()
+
+	han.tarReader = tar.NewReader(gzipReader)
+
+	// Reading the restore.cbak.json file
+	if err := han.readRestoreJSON(); err != nil {
+		return err
+	}
+
+	return nil
+}

@@ -359,6 +359,32 @@ func (man *Manager) evalOutputFiles() error {
 	return nil
 }
 
+// Function for restoring
+
+func (man *Manager) evalRestFilePath() error {
+
+	// path checking
+	fileInfo, err := os.Stat(man.InputData.RestoreData.FilePath)
+	if err != nil {
+		return nil
+	}
+
+	// is it a directory!!
+	if fileInfo.IsDir() {
+		return errors.New("the given path is a directory, not a file")
+	}
+
+	// add file path to the handler
+	man.Handler.RestoreFilePath, err = filepath.Abs(man.InputData.RestoreData.FilePath)
+	if err != nil {
+		slog.Warn("Cannot get the absolute path for the given path, using the relative path. Related error is shown below")
+		slog.Error(err.Error())
+		man.Handler.RestoreFilePath = man.InputData.RestoreData.FilePath
+	}
+
+	return nil
+}
+
 func (man *Manager) Manage() error {
 	if man.InputData.IsBackup {
 		slog.Info("its backup")
@@ -397,7 +423,16 @@ func (man *Manager) Manage() error {
 		}
 
 	} else if man.InputData.IsRestore {
-		// WORK IN PROGRESS
+		// working
+		// Evaluating the Restore File Path
+		if err := man.evalRestFilePath(); err != nil {
+			return err
+		}
+
+		// Handling restore
+		if err := man.Handler.UnPack(); err != nil {
+			return err
+		}
 	} else {
 		return errors.New("define a mode ('B' for bakup and 'R' for restore)")
 	}
