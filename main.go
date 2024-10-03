@@ -103,6 +103,3 @@ func main() {
 // TODOS
 // 0. checking file based backup
 // 1. adding a method to extract the backed up folder
-
-// BUGS
-// 1. Cannot parse directories which are passed through backup conf

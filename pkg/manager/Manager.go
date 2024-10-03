@@ -50,7 +50,6 @@ func NewManager(inputData types.InputData) (*Manager, error) {
 	return &manager, nil
 }
 
-// TODO: backup config file checking needed
 // Backup Config File Functions
 func (man *Manager) readBackupConfig() error {
 	// getting the path the write way
@@ -109,14 +108,8 @@ func (man *Manager) restFileAddEntries(key string, slot types.RestSlot) error {
 
 // common function for adding paths to the Handler
 func (man *Manager) addPathToHandler(path string) error {
-	absPath := man.convertPathToAbs(path)
-
 	// absolute path checking
-	// absPath, err := filepath.Abs(path)
-	// if err != nil {
-	// 	slog.Warn(fmt.Sprintf("error while getting absolute path for %s. Using the given relative path", path))
-	// 	absPath = path
-	// }
+	absPath := man.convertPathToAbs(path)
 
 	// path checking
 	info, err := os.Stat(absPath)
@@ -386,7 +379,7 @@ func (man *Manager) evalOutputFiles() error {
 
 func (man *Manager) evalRestFilePath() error {
 	// absolute path checking
-	man.InputData.BackupData.InputPath = man.convertPathToAbs(man.InputData.BackupData.InputPath)
+	man.InputData.RestoreData.FilePath = man.convertPathToAbs(man.InputData.RestoreData.FilePath)
 
 	// path checking
 	fileInfo, err := os.Stat(man.InputData.RestoreData.FilePath)
@@ -400,17 +393,12 @@ func (man *Manager) evalRestFilePath() error {
 	}
 
 	// add file path to the handler
-	man.Handler.RestoreFilePath, err = filepath.Abs(man.InputData.RestoreData.FilePath)
-	if err != nil {
-		slog.Warn("Cannot get the absolute path for the given path, using the relative path. Related error is shown below")
-		slog.Error(err.Error())
-		man.Handler.RestoreFilePath = man.InputData.RestoreData.FilePath
-	}
-
+	man.Handler.RestoreFilePath = man.InputData.RestoreData.FilePath
 	return nil
 }
 
 func (man *Manager) Manage() error {
+	// IsBackup ==> true
 	if man.InputData.IsBackup {
 		// Config file
 		if man.InputData.BackupData.UseConf {
@@ -444,7 +432,10 @@ func (man *Manager) Manage() error {
 			return err
 		}
 
-	} else if man.InputData.IsRestore {
+	}
+
+	// IsRestore ==> true
+	if man.InputData.IsRestore {
 		// working
 		// Evaluating the Restore File Path
 		if err := man.evalRestFilePath(); err != nil {
