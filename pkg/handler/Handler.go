@@ -14,14 +14,8 @@ import (
 	"github.com/klauspost/compress/zstd"
 )
 
-type InputPaths struct {
-	Header *tar.Header
-	Path   string
-	IsDir  bool `default:"false"`
-}
-
 type Handler struct {
-	InputFiles      []InputPaths
+	InputFiles      []types.InputPaths
 	OutputFiles     []string //double check this is passed from the manager
 	RestoreFilePath string
 	tarWriter       *tar.Writer

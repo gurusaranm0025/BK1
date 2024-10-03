@@ -1,6 +1,6 @@
 package conf
 
-var CachePath string = ".cache/cb"
+import "gurusaranm0025/cbak/pkg/types"
 
 var ModesPath = struct {
 	Hyprland string
@@ -16,25 +16,7 @@ var ModesPath = struct {
 	Dunst:    ".config/dunst",
 }
 
-type Mode struct {
-	IsTrue      bool
-	Name        string
-	Path        string
-	Tag         string
-	TagID       int
-	IsUnderHome bool
-	IsFile      bool
-}
-
-type ModesMapItem struct {
-	Path        string
-	Tag         string
-	TagID       int
-	IsUnderHome bool
-	IsDir       bool
-}
-
-var ModesMap = map[string]*ModesMapItem{
+var ModesMap = map[string]types.Mode{
 	"hypr": {
 		Path:        ModesPath.Hyprland,
 		Tag:         "h",
@@ -70,12 +52,4 @@ var ModesMap = map[string]*ModesMapItem{
 		IsUnderHome: true,
 		IsDir:       true,
 	},
-}
-
-var Modes = []Mode{
-	{IsTrue: false, Name: "hypr", Path: ModesPath.Hyprland, Tag: "h", TagID: 0, IsUnderHome: true, IsFile: false},
-	{IsTrue: false, Name: "rofi", Path: ModesPath.Rofi, Tag: "r", TagID: 1, IsUnderHome: true, IsFile: false},
-	{IsTrue: false, Name: "waybar", Path: ModesPath.Waybar, Tag: "wb", TagID: 2, IsUnderHome: true, IsFile: false},
-	{IsTrue: false, Name: "wlogout", Path: ModesPath.Wlogout, Tag: "wl", TagID: 3, IsUnderHome: true, IsFile: false},
-	{IsTrue: false, Name: "dunst", Path: ModesPath.Dunst, Tag: "d", TagID: 4, IsUnderHome: true, IsFile: false},
 }

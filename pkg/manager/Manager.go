@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gurusaranm0025/cbak/pkg/components"
 	"gurusaranm0025/cbak/pkg/conf"
 	"gurusaranm0025/cbak/pkg/handler"
 	"gurusaranm0025/cbak/pkg/types"
@@ -18,25 +17,15 @@ import (
 	"time"
 )
 
-// TODO:
-// 4. Handle restore
-
-// Backup conf json file type
-type BakJSON struct {
-	BackupName  string
-	BackupPaths []string
-	Tags        []string
-}
-
 type Manager struct {
-	InputData    components.InputData
-	BackupConfig BakJSON
+	InputData    types.InputData
+	BackupConfig types.BakJSON
 	HomeDir      string
 	CWD          string
 	Handler      handler.Handler
 }
 
-func NewManager(inputData components.InputData) (*Manager, error) {
+func NewManager(inputData types.InputData) (*Manager, error) {
 	var manager Manager
 	var err error
 
@@ -161,7 +150,7 @@ func (man *Manager) addPathToHandler(path string) error {
 			fileHeader.Name = restFileSlot.HeaderName + time.Now().Format("2006-01-02,15:04:05.000000000")
 
 			// adding headers and file paths inside the directory to the Handler
-			man.Handler.InputFiles = append(man.Handler.InputFiles, handler.InputPaths{
+			man.Handler.InputFiles = append(man.Handler.InputFiles, types.InputPaths{
 				Header: fileHeader,
 				Path:   path,
 				IsDir:  fileInfo.IsDir(),
@@ -200,7 +189,7 @@ func (man *Manager) addPathToHandler(path string) error {
 		fileHeader.Name = filepath.Base(absPath) + time.Now().Format("2006-01-02,15:04:05.000000000")
 
 		// adding header and the path to the handler
-		man.Handler.InputFiles = append(man.Handler.InputFiles, handler.InputPaths{
+		man.Handler.InputFiles = append(man.Handler.InputFiles, types.InputPaths{
 			Header: fileHeader,
 			Path:   absPath,
 		})

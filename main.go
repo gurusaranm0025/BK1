@@ -2,21 +2,15 @@ package main
 
 import (
 	"fmt"
-	"gurusaranm0025/cbak/pkg/components"
 	"gurusaranm0025/cbak/pkg/manager"
+	"gurusaranm0025/cbak/pkg/types"
 	"log/slog"
 	"os"
 
 	"github.com/spf13/cobra"
 )
 
-type InputTagP struct {
-	Name   string
-	Path   string
-	IsTrue bool
-}
-
-var InputTagsP = []InputTagP{
+var InputTagsP = []types.InputTagP{
 	{Name: "hypr", IsTrue: false, Path: "~/.config/hypr"},
 	{Name: "rofi", IsTrue: false, Path: "~/.config/rofi"},
 	{Name: "wlogout", IsTrue: false, Path: "~/.config/wlogout"},
@@ -24,7 +18,7 @@ var InputTagsP = []InputTagP{
 	{Name: "dunst", IsTrue: false, Path: "~/.config/dunst"},
 }
 
-func checkTags(inputTagsP []InputTagP) []string {
+func checkTags(inputTagsP []types.InputTagP) []string {
 	var outSlice []string
 
 	for _, value := range inputTagsP {
@@ -37,7 +31,7 @@ func checkTags(inputTagsP []InputTagP) []string {
 }
 
 func main() {
-	var InputData components.InputData
+	var InputData types.InputData
 
 	var rootCMD = &cobra.Command{
 		Use:   "cbak",
