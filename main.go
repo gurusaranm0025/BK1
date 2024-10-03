@@ -36,7 +36,7 @@ func main() {
 	var rootCMD = &cobra.Command{
 		Use:   "cbak",
 		Short: "yet another tool take backups",
-		Long:  "a tool to take backups of config files and to restore them",
+		Long:  "A tool to take backups of config files and to restore them",
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			// check for tags
@@ -45,12 +45,12 @@ func main() {
 				InputData.IsBackup = true
 			}
 
-			// // // Validating the input path and output path and setting backup mode
+			// Validating the input path and output path and setting backup mode
 			if (len(InputData.BackupData.InputPath) > 0) || (len(InputData.BackupData.OutputPath) > 0) {
 				InputData.IsBackup = true
 			}
 
-			// // // Validating the backup config path
+			// Validating the backup config path
 			if len(InputData.BackupData.ConfPath) > 0 {
 				InputData.BackupData.UseConf = true
 				InputData.IsBackup = true
@@ -60,8 +60,6 @@ func main() {
 			if len(InputData.RestoreData.FilePath) > 0 {
 				InputData.IsRestore = true
 			}
-
-			fmt.Println(InputData)
 
 			manager, err := manager.NewManager(InputData)
 			if err != nil {
@@ -87,7 +85,7 @@ func main() {
 	// setting flags for the output path
 	rootCMD.Flags().StringVarP(&InputData.BackupData.OutputPath, "output", "o", "", "where to save the backup (default is the currnet working directory)")
 
-	// // Backup config file
+	// Backup config file
 	rootCMD.Flags().StringVarP(&InputData.BackupData.ConfPath, "backup-conf", "C", "", "the path to the config file for taking backup.")
 
 	// Restore from the backed up file
@@ -101,3 +99,10 @@ func main() {
 
 	os.Exit(0)
 }
+
+// TODOS
+// 0. checking file based backup
+// 1. adding a method to extract the backed up folder
+
+// BUGS
+// 1. Cannot parse directories which are passed through backup conf

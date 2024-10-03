@@ -53,6 +53,8 @@ func NewManager(inputData types.InputData) (*Manager, error) {
 // TODO: backup config file checking needed
 // Backup Config File Functions
 func (man *Manager) readBackupConfig() error {
+	// getting the path the write way
+	man.InputData.BackupData.ConfPath = man.convertPathToAbs(man.InputData.BackupData.ConfPath)
 
 	// checking config path
 	info, err := os.Stat(man.InputData.BackupData.ConfPath)
@@ -107,17 +109,19 @@ func (man *Manager) restFileAddEntries(key string, slot types.RestSlot) error {
 
 // common function for adding paths to the Handler
 func (man *Manager) addPathToHandler(path string) error {
-	// path checking
-	info, err := os.Stat(path)
-	if err != nil {
-		return err
-	}
+	absPath := man.convertPathToAbs(path)
 
 	// absolute path checking
-	absPath, err := filepath.Abs(path)
+	// absPath, err := filepath.Abs(path)
+	// if err != nil {
+	// 	slog.Warn(fmt.Sprintf("error while getting absolute path for %s. Using the given relative path", path))
+	// 	absPath = path
+	// }
+
+	// path checking
+	info, err := os.Stat(absPath)
 	if err != nil {
-		slog.Warn(fmt.Sprintf("error while getting absolute path for %s. Using the given relative path", path))
-		absPath = path
+		return err
 	}
 
 	// appending path to handler data
@@ -315,18 +319,14 @@ func (man *Manager) evalOutputFiles() error {
 			// Backup file name from the config
 			path := filepath.Join(man.CWD, man.BackupConfig.BackupName)
 
-			// getting the abspath
-			abspath, err := filepath.Abs(path)
-			if err != nil {
-				slog.Warn("Error getting absolute path for output file, proceeding with relative path.")
-				abspath = path
-			}
+			// getting absolute path
+			absPath := man.convertPathToAbs(path)
 
 			// checking the path
-			info, err := os.Stat(abspath)
+			info, err := os.Stat(absPath)
 			// file doesn't exist NO ISSUES
-			if err == os.ErrNotExist {
-				man.Handler.OutputFiles = []string{abspath}
+			if os.IsNotExist(err) {
+				man.Handler.OutputFiles = []string{absPath}
 				return nil
 			}
 
@@ -337,27 +337,23 @@ func (man *Manager) evalOutputFiles() error {
 
 			// Its a folder, return it
 			if info.IsDir() {
-				return fmt.Errorf("the output path '%s' is already taken as a directory", abspath)
+				return fmt.Errorf("the output path '%s' is already taken as a directory", absPath)
 			} else {
 				// else a little warning about overwritting
-				slog.Warn(fmt.Sprintf("the output file '%s' already exists and it will overwritten", abspath))
+				slog.Warn(fmt.Sprintf("the output file '%s' already exists and it will overwritten", absPath))
 				time.Sleep(5 * time.Second)
 			}
 
 			// seeting Handler data
-			man.Handler.OutputFiles = []string{abspath}
+			man.Handler.OutputFiles = []string{absPath}
 		}
 	} else {
 		// output path is given
 		// getting absolute path
-		abspath, err := filepath.Abs(man.InputData.BackupData.OutputPath)
-		if err != nil {
-			slog.Warn("Error getting absolute path for output file, proceeding with relative path.")
-			abspath = man.InputData.BackupData.OutputPath
-		}
+		absPath := man.convertPathToAbs(man.InputData.BackupData.OutputPath)
 
 		// checking the path
-		info, err := os.Stat(abspath)
+		info, err := os.Stat(absPath)
 		// file doesn't exit. NO ISSUES
 
 		// Other issues, return it.
@@ -366,21 +362,21 @@ func (man *Manager) evalOutputFiles() error {
 		}
 
 		if os.IsNotExist(err) {
-			man.Handler.OutputFiles = []string{abspath}
+			man.Handler.OutputFiles = []string{absPath}
 			return nil
 		}
 
 		// Its a folder, return it
 		if info.IsDir() {
-			return fmt.Errorf("the output path '%s' is already taken as a directory", abspath)
+			return fmt.Errorf("the output path '%s' is already taken as a directory", absPath)
 		} else {
 			// else a little message of overwritting
-			slog.Warn(fmt.Sprintf("the output file '%s' already exists and it will overwritten", abspath))
+			slog.Warn(fmt.Sprintf("the output file '%s' already exists and it will overwritten", absPath))
 			time.Sleep(5 * time.Second)
 		}
 
 		// setting Handler data
-		man.Handler.OutputFiles = []string{abspath}
+		man.Handler.OutputFiles = []string{absPath}
 	}
 
 	return nil
@@ -389,6 +385,8 @@ func (man *Manager) evalOutputFiles() error {
 // Function for restoring
 
 func (man *Manager) evalRestFilePath() error {
+	// absolute path checking
+	man.InputData.BackupData.InputPath = man.convertPathToAbs(man.InputData.BackupData.InputPath)
 
 	// path checking
 	fileInfo, err := os.Stat(man.InputData.RestoreData.FilePath)
