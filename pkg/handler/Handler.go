@@ -21,6 +21,7 @@ type Handler struct {
 	tarWriter       *tar.Writer
 	tarReader       *tar.Reader
 	HomeDir         string
+	CWD             string
 
 	RestJSONFile types.RestJSON
 }
@@ -170,10 +171,10 @@ func (han *Handler) unPackFiles() error {
 
 		// if entry is a directory, then create the directory
 		if header.FileInfo().IsDir() {
-			fmt.Printf("Created directory %s\n", fullPath)
 			if err := os.MkdirAll(fullPath, os.ModePerm); err != nil {
 				return err
 			}
+			fmt.Printf("Created directory %s\n", fullPath)
 			continue
 		}
 
@@ -228,6 +229,134 @@ func (han *Handler) UnPack() error {
 
 	// unpacking the tarball
 	if err := han.unPackFiles(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// // // functions for extracting the data
+func (han *Handler) extarctData() error {
+	// creating the base directory for extracting
+	DirPath, err := han.createDestDir()
+	if err != nil {
+		return err
+	}
+
+	// saving the json file
+	err = han.saveRestoreFileJSON(DirPath)
+	if err != nil {
+		return err
+	}
+
+	// going through the cb file
+	for {
+		header, err := han.tarReader.Next()
+
+		// if its the end, then its the end
+		if err == io.EOF {
+			break
+		}
+
+		// Error!! Erroooorrr!!!!
+		if err != nil {
+			return err
+		}
+
+		// getting current slot
+		currentSlot := han.RestJSONFile.Slots[header.Name]
+
+		// getting full path
+		fullPath := filepath.Join(DirPath, currentSlot.HeaderName)
+
+		// if its the directory, then create it.
+		if header.FileInfo().IsDir() {
+			if err := os.MkdirAll(fullPath, os.ModePerm); err != nil {
+				return err
+			}
+			fmt.Printf("Created Directory %s\n", fullPath)
+			continue
+		}
+
+		// if its not a directory then create a file for it
+		outFile, err := os.Create(fullPath)
+		if err != nil {
+			return err
+		}
+		defer outFile.Close()
+
+		// copy contents to the file
+		if _, err := io.Copy(outFile, han.tarReader); err != nil {
+			return err
+		}
+
+		// do it again
+	}
+
+	return nil
+}
+
+// function to create the directory where it needs to be extracted
+func (han *Handler) createDestDir() (string, error) {
+	fileName := strings.Split(filepath.Base(han.RestoreFilePath), ".")
+	fileBaseName := fileName[0]
+
+	fullPath := filepath.Join(han.CWD, fileBaseName)
+
+	if err := os.MkdirAll(fullPath, os.ModePerm); err != nil {
+		return "", err
+	}
+
+	return fullPath, nil
+}
+
+// function to extract the json file
+func (han *Handler) saveRestoreFileJSON(dirPath string) error {
+	// Marshalling the struct
+	JSONData, err := json.MarshalIndent(han.RestJSONFile, "", "	")
+	if err != nil {
+		return err
+	}
+
+	// copying contents to the file
+	if err := os.WriteFile(filepath.Join(dirPath, "restoreFile.cbak.json"), JSONData, os.ModePerm); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// function for extracting
+func (han *Handler) Extract() error {
+	// opening the file
+	restFile, err := os.Open(han.RestoreFilePath)
+	if err != nil {
+		return err
+	}
+	defer restFile.Close()
+
+	// // // // Creating readers
+	zstdReader, err := zstd.NewReader(restFile)
+	if err != nil {
+		return err
+	}
+	defer zstdReader.Close()
+
+	gzipReader, err := gzip.NewReader(zstdReader)
+	if err != nil {
+		return err
+	}
+	defer gzipReader.Close()
+
+	han.tarReader = tar.NewReader(gzipReader)
+
+	// Reading the restore.cbak.json file
+	if err := han.readRestoreJSON(); err != nil {
+		return err
+	}
+
+	// Extracting the data form the cb file
+	if err := han.extarctData(); err != nil {
 		return err
 	}
 

@@ -46,6 +46,7 @@ func NewManager(inputData types.InputData) (*Manager, error) {
 	if err != nil {
 		return nil, err
 	}
+	manager.Handler.CWD = manager.CWD
 
 	return &manager, nil
 }
@@ -475,7 +476,13 @@ func (man *Manager) Manage() error {
 	if man.InputData.IsExtract {
 		// IsExtract ==> true
 
+		// Evaluating the extract path
 		if err := man.evalExtractPath(); err != nil {
+			return err
+		}
+
+		// Handling extraction
+		if err := man.Handler.Extract(); err != nil {
 			return err
 		}
 
