@@ -85,19 +85,19 @@ func main() {
 	}
 
 	// setting flags for backup path
-	rootCMD.Flags().StringSliceVarP(&InputData.BackupData.InputPaths, "path", "p", []string{}, "the path which you want to take backup")
+	rootCMD.Flags().StringSliceVarP(&InputData.BackupData.InputPaths, "path", "p", []string{}, "custom paths to take backup, for providing more than one path then separate each one with a ','")
 
 	// setting flags for the output path
-	rootCMD.Flags().StringVarP(&InputData.BackupData.OutputPath, "output", "o", "", "where to save the backup (default is the currnet working directory)")
+	rootCMD.Flags().StringVarP(&InputData.BackupData.OutputPath, "output", "o", "", "tell your own output file name or name along with the custom location(default location is the currnet working directory)")
 
 	// Backup config file
-	rootCMD.Flags().StringVarP(&InputData.BackupData.ConfPath, "backup-conf", "C", "", "the path to the config file for taking backup.")
+	rootCMD.Flags().StringVarP(&InputData.BackupData.ConfPath, "backup-conf", "C", "", "takes a json file as input, which describes which paths that needs to be taken backup")
 
 	// Restore from the backed up file
 	rootCMD.Flags().StringVarP(&InputData.RestoreData.FilePath, "restore", "R", "", "give the path to the backed up file, and it will restore that backup")
 
 	// flag for extracting the file
-	rootCMD.Flags().StringVarP(&InputData.ExtractData.Path, "extract", "E", "", "extracts the backed up file in the cuurent folder to view")
+	rootCMD.Flags().StringVarP(&InputData.ExtractData.Path, "extract", "E", "", "extracts the backed up file in the cuurent folder")
 
 	// version
 	rootCMD.Flags().BoolVarP(&InputData.TellVersion, "version", "v", false, "version of this tool (cbak)")
@@ -112,7 +112,6 @@ func main() {
 }
 
 // TODOS
-// 4. getting multiple inputs in --path flag
 // 5. try buffer copying and writing
 
 // BUGS

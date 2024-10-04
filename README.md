@@ -1,4 +1,4 @@
-# CBak (Configuration Backup) v0.6.5-alpha
+# CBak (Configuration Backup) v0.6.7-alpha
 
 Its a tool I made to take backup of my configuration files all over in my linux system, and restore them in my other computers.
 
@@ -9,7 +9,7 @@ Its a tool I made to take backup of my configuration files all over in my linux 
     -E : to extarct the backups
     -R : it takes the backed up file as input and restores the the files in that backup
     -o : tell your own output file name
-    -p : custom path to take backup
+    -p : custom paths to take backup, for providing more than one path then separate each one with a ','. 
     -v : version
     -h : help
 
