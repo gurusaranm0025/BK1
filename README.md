@@ -18,7 +18,7 @@ It has its own compression methods built into it, and a own method to open the b
 ## Installation
 
 ### Step 1:
-Install the only dependency **make**.
+To install the only dependency **make**.
 
 #### For Arch Linux:
 
