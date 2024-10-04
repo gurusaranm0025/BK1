@@ -1,9 +1,6 @@
-hyprone
-go.sum
 vendor
 cbak
+build
 
-hyprone.bak.conf
+# test files
 Backup*
-cb
-rofiBackup*
