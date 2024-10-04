@@ -18,24 +18,32 @@ It has its own compression methods built into it, and a own method to open the b
 ## Installation
 
 ### Step 1:
-To install the only dependency **make**.
+To install the dependencies **make and go**.
 
 #### For Arch Linux:
 
-    sudo pacman -S make
+    sudo pacman -S make go
 
 #### For Ubuntu/Debian:
 
     sudo apt update
-    sudo apt install build-essential
+    sudo apt install build-essential golang
 
 #### For CentOS/RHEL 7:
 
-    sudo yum install make
+    sudo yum install make golang
 
 #### For CentOS/RHEL 8 and Fedora:
 
-    sudo dnf install make
+    sudo dnf install make golang
+
+### For OpenSUSE:
+
+    sudo zypper install make go
+
+### For Alpine linux:
+
+    sudo apk add make go
 
 ### Step 2:
 Clone this repository, where you feel safe,
