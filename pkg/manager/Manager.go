@@ -1,5 +1,7 @@
 package manager
 
+// .cbak used
+
 import (
 	"archive/tar"
 	"encoding/json"
@@ -95,11 +97,11 @@ func (man *Manager) restFileAddEntries(key string, slot types.RestSlot) error {
 	slot.ParentPath = strings.Replace(slot.ParentPath, man.HomeDir, "#/HomeDir#/", 1)
 
 	// checking for duplicate entries
-	// if man.Handler.Restore.JSONFile.Slots[key].ParentPath != "" && man.Handler.Restore.JSONFile.Slots[key].HeaderName != "" {
-	// 	fmt.Println("Existing slot  ===> ", man.Handler.Restore.JSONFile.Slots[key])
-	// 	fmt.Println("Need to enter slot ===> ", slot)
-	// 	return errors.New("header name is already entered in the restore file")
-	// }
+	if man.Handler.Restore.JSONFile.Slots[key].ParentPath != "" || man.Handler.Restore.JSONFile.Slots[key].HeaderName != "" {
+		fmt.Println("Existing slot  ===> ", man.Handler.Restore.JSONFile.Slots[key])
+		fmt.Println("Need to enter slot ===> ", slot)
+		return errors.New("header name is already entered in the restore file")
+	}
 
 	// adding entry to the restore json file
 	man.Handler.Restore.JSONFile.Slots[key] = slot
@@ -244,13 +246,11 @@ func (man *Manager) evalBackupConfig() error {
 	// Evaluating backup name
 	if !(len(man.BackupConfig.BackupName) > 0) {
 		man.BackupConfig.BackupName = filepath.Base(man.InputData.BackupData.ConfPath)
-		man.BackupConfig.BackupName = strings.TrimSuffix(man.BackupConfig.BackupName, ".json")
+		man.BackupConfig.BackupName = strings.TrimSuffix(man.BackupConfig.BackupName, ".json") + ".cbak"
 	}
 
 	// Evaluating backup paths in the config file
-	if !(len(man.BackupConfig.BackupPaths) > 0) {
-		slog.Info(fmt.Sprintf("No backup paths mentioned in the backup config file ==> %s. And procedding with backup.", man.InputData.BackupData.ConfPath))
-	} else if len(man.BackupConfig.BackupPaths) > 0 {
+	if len(man.BackupConfig.BackupPaths) > 0 {
 		for _, path := range man.BackupConfig.BackupPaths {
 
 			// adding path to the handler
@@ -259,19 +259,17 @@ func (man *Manager) evalBackupConfig() error {
 			}
 		}
 	} else {
-		return fmt.Errorf("unknown error occurred with backup config file %s. This error was never supposed to be come, if it is then something very strange is going on", man.InputData.BackupData.ConfPath)
+		slog.Info(fmt.Sprintf("No backup paths mentioned in the backup config file ==> %s. And procedding with backup.", man.InputData.BackupData.ConfPath))
 	}
 
 	// Evaluating backup tags in the file
-	if !(len(man.BackupConfig.Tags) > 0) {
-		slog.Info(fmt.Sprintf("No tags mentioned in the backup config file ==> %s. And procedding with backup.", man.InputData.BackupData.ConfPath))
-	} else if len(man.BackupConfig.Tags) > 0 {
+	if len(man.BackupConfig.Tags) > 0 {
 		// adding tags to Handler data
 		if err := man.addTags(man.BackupConfig.Tags); err != nil {
 			return err
 		}
 	} else {
-		return fmt.Errorf("unknown error occurred with backup config file %s. This error was never supposed to be come, if it is then something very strange is going on", man.InputData.BackupData.ConfPath)
+		slog.Info(fmt.Sprintf("No tags mentioned in the backup config file ==> %s. And procedding with backup.", man.InputData.BackupData.ConfPath))
 	}
 
 	return nil
@@ -280,11 +278,7 @@ func (man *Manager) evalBackupConfig() error {
 // Evaluating the path which needs to be **baked** up
 func (man *Manager) evalInputFilePath() error {
 
-	if !(len(man.InputData.BackupData.InputPath) > 0) {
-		if !man.InputData.BackupData.UseConf && !(len(man.InputData.BackupData.Tags) > 0) {
-			return fmt.Errorf("no paths or tags are given for taking backup")
-		}
-	} else if len(man.InputData.BackupData.InputPath) > 0 {
+	if len(man.InputData.BackupData.InputPath) > 0 {
 		path := man.InputData.BackupData.InputPath
 
 		// adding the path to the Handler data
@@ -292,7 +286,9 @@ func (man *Manager) evalInputFilePath() error {
 			return err
 		}
 	} else {
-		return fmt.Errorf("unknown error occurred with the file in input path %s. This error was never supposed to be come, if it is then something very strange is going on", man.InputData.BackupData.InputPath)
+		if !man.InputData.BackupData.UseConf && !(len(man.InputData.BackupData.Tags) > 0) {
+			return fmt.Errorf("no paths or tags are given for taking backup")
+		}
 	}
 
 	return nil
@@ -300,17 +296,15 @@ func (man *Manager) evalInputFilePath() error {
 
 func (man *Manager) evalTags() error {
 
-	if !(len(man.InputData.BackupData.Tags) > 0) {
-		if !man.InputData.BackupData.UseConf && !(len(man.InputData.BackupData.InputPath) > 0) {
-			return fmt.Errorf("no paths or tags are given for taking backup")
-		}
-	} else if len(man.InputData.BackupData.Tags) > 0 {
+	if len(man.InputData.BackupData.Tags) > 0 {
 		// adding tags to the Handler data
 		if err := man.addTags(man.InputData.BackupData.Tags); err != nil {
 			return err
 		}
 	} else {
-		return fmt.Errorf("unknown error occurred with the tags '%s'. This error was never supposed to be come, if it is then something very strange is going on", man.InputData.BackupData.Tags)
+		if !man.InputData.BackupData.UseConf && !(len(man.InputData.BackupData.InputPath) > 0) {
+			return fmt.Errorf("no paths or tags are given for taking backup")
+		}
 	}
 
 	return nil
@@ -319,16 +313,48 @@ func (man *Manager) evalTags() error {
 // Evaluating the given output path
 func (man *Manager) evalOutputFiles() error {
 	// Checking the output path and output file name
-	if !(len(man.InputData.BackupData.OutputPath) > 0) {
-		// Is Confif file given
-		if !man.InputData.BackupData.UseConf {
+
+	if len(man.InputData.BackupData.OutputPath) > 0 {
+		// output path is given
+		// getting absolute path
+		absPath := man.convertPathToAbs(man.InputData.BackupData.OutputPath)
+
+		// checking the path
+		info, err := os.Stat(absPath)
+		// file doesn't exit. NO ISSUES
+		if os.IsNotExist(err) {
+			man.Handler.Output.Path = absPath
+			return nil
+		}
+
+		// Other issues, return it.
+		if err != nil && !os.IsNotExist(err) {
+			return err
+		}
+
+		// Its a folder, return it
+		if info.IsDir() {
+			return fmt.Errorf("the output path '%s' is already taken as a directory", absPath)
+		} else {
+			// else a little message of overwritting
+			slog.Warn(fmt.Sprintf("the output file '%s' already exists and it will overwritten", absPath))
+			time.Sleep(5 * time.Second)
+		}
+
+		// setting Handler data
+		man.Handler.Output.Path = absPath
+	} else {
+		// output path or name not given is given
+
+		// config is not given or the there are no backup name given in the config
+		if !man.InputData.BackupData.UseConf || (man.InputData.BackupData.UseConf && (len(man.BackupConfig.BackupName) == 0)) {
 			// no config file then name based on current time
-			man.Handler.Output.Path = filepath.Join(man.CWD, "Backup"+time.Now().Format("20060102150405"))
+			man.Handler.Output.Path = filepath.Join(man.CWD, "Backup"+time.Now().Format("20060102150405")) + ".cbak"
 			return nil
 		} else {
 			// using a config
 			// Backup file name from the config
-			path := filepath.Join(man.CWD, man.BackupConfig.BackupName)
+			path := man.BackupConfig.BackupName
 
 			// getting absolute path
 			absPath := man.convertPathToAbs(path)
@@ -358,70 +384,18 @@ func (man *Manager) evalOutputFiles() error {
 			// seeting Handler data
 			man.Handler.Output.Path = absPath
 		}
-	} else {
-		// output path is given
-		// getting absolute path
-		absPath := man.convertPathToAbs(man.InputData.BackupData.OutputPath)
-
-		// checking the path
-		info, err := os.Stat(absPath)
-		// file doesn't exit. NO ISSUES
-
-		// Other issues, return it.
-		if err != nil && !os.IsNotExist(err) {
-			return err
-		}
-
-		if os.IsNotExist(err) {
-			man.Handler.Output.Path = absPath
-			return nil
-		}
-
-		// Its a folder, return it
-		if info.IsDir() {
-			return fmt.Errorf("the output path '%s' is already taken as a directory", absPath)
-		} else {
-			// else a little message of overwritting
-			slog.Warn(fmt.Sprintf("the output file '%s' already exists and it will overwritten", absPath))
-			time.Sleep(5 * time.Second)
-		}
-
-		// setting Handler data
-		man.Handler.Output.Path = absPath
 	}
 
 	return nil
 }
 
-// Function for restoring
-
-func (man *Manager) evalRestFilePath() error {
+// function for evaluating paths
+func (man *Manager) evalPath(path string) error {
 	// absolute path checking
-	man.InputData.RestoreData.FilePath = man.convertPathToAbs(man.InputData.RestoreData.FilePath)
+	path = man.convertPathToAbs(path)
 
 	// path checking
-	fileInfo, err := os.Stat(man.InputData.RestoreData.FilePath)
-	if err != nil {
-		return nil
-	}
-
-	// is it a directory!!
-	if fileInfo.IsDir() {
-		return errors.New("the given path is a directory, not a file")
-	}
-
-	// add file path to the handler
-	man.Handler.Restore.Path = man.InputData.RestoreData.FilePath
-	return nil
-}
-
-// function for managing extract flag
-func (man *Manager) evalExtractPath() error {
-	// absolute path checking
-	man.InputData.ExtractData.Path = man.convertPathToAbs(man.InputData.ExtractData.Path)
-
-	// path checking
-	fileInfo, err := os.Stat(man.InputData.ExtractData.Path)
+	fileInfo, err := os.Stat(path)
 	if err != nil {
 		return err
 	}
@@ -432,11 +406,12 @@ func (man *Manager) evalExtractPath() error {
 	}
 
 	// adding path to the handler
-	man.Handler.Restore.Path = man.InputData.ExtractData.Path
+	man.Handler.Restore.Path = path
 
 	return nil
 }
 
+// Manage function, manages the data passed from the CLI and takes necessary actions
 func (man *Manager) Manage() error {
 	// IsBackup ==> true
 	if man.InputData.IsBackup {
@@ -478,7 +453,7 @@ func (man *Manager) Manage() error {
 	// IsRestore ==> true
 	if man.InputData.IsRestore {
 		// Evaluating the Restore File Path
-		if err := man.evalRestFilePath(); err != nil {
+		if err := man.evalPath(man.InputData.RestoreData.FilePath); err != nil {
 			return err
 		}
 
@@ -494,7 +469,7 @@ func (man *Manager) Manage() error {
 		// IsExtract ==> true
 
 		// Evaluating the extract path
-		if err := man.evalExtractPath(); err != nil {
+		if err := man.evalPath(man.InputData.ExtractData.Path); err != nil {
 			return err
 		}
 
@@ -506,5 +481,5 @@ func (man *Manager) Manage() error {
 		return nil
 	}
 
-	return errors.New("define a mode ('E' for extracting and 'R' for restoring from the backup file)")
+	return errors.New("define a mode ('E' for extracting and 'R' for restoring from the backup file) or have a try at the help command")
 }
