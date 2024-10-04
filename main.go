@@ -46,7 +46,7 @@ func main() {
 			}
 
 			// Validating the input path and output path and setting backup mode
-			if (len(InputData.BackupData.InputPath) > 0) || (len(InputData.BackupData.OutputPath) > 0) {
+			if (len(InputData.BackupData.InputPaths) > 0) || (len(InputData.BackupData.OutputPath) > 0) {
 				InputData.IsBackup = true
 			}
 
@@ -85,7 +85,7 @@ func main() {
 	}
 
 	// setting flags for backup path
-	rootCMD.Flags().StringVarP(&InputData.BackupData.InputPath, "path", "p", "", "the path which you want to take backup")
+	rootCMD.Flags().StringSliceVarP(&InputData.BackupData.InputPaths, "path", "p", []string{}, "the path which you want to take backup")
 
 	// setting flags for the output path
 	rootCMD.Flags().StringVarP(&InputData.BackupData.OutputPath, "output", "o", "", "where to save the backup (default is the currnet working directory)")

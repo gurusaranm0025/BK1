@@ -276,12 +276,13 @@ func (man *Manager) evalBackupConfig() error {
 // Evaluating the path which needs to be **baked** up
 func (man *Manager) evalInputFilePath() error {
 
-	if len(man.InputData.BackupData.InputPath) > 0 {
-		path := man.InputData.BackupData.InputPath
-
-		// adding the path to the Handler data
-		if err := man.addPathToHandler(path); err != nil {
-			return err
+	if len(man.InputData.BackupData.InputPaths) > 0 {
+		// looping through all the paths
+		for _, path := range man.InputData.BackupData.InputPaths {
+			// adding the path to the Handler data
+			if err := man.addPathToHandler(path); err != nil {
+				return err
+			}
 		}
 	} else {
 		if !man.InputData.BackupData.UseConf && !(len(man.InputData.BackupData.Tags) > 0) {
@@ -300,7 +301,7 @@ func (man *Manager) evalTags() error {
 			return err
 		}
 	} else {
-		if !man.InputData.BackupData.UseConf && !(len(man.InputData.BackupData.InputPath) > 0) {
+		if !man.InputData.BackupData.UseConf && !(len(man.InputData.BackupData.InputPaths) > 0) {
 			return fmt.Errorf("no paths or tags are given for taking backup")
 		}
 	}

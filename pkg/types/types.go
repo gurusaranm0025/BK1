@@ -15,7 +15,7 @@ type InputData struct {
 		UseConf    bool
 		ConfPath   string
 		OutputPath string
-		InputPath  string
+		InputPaths []string
 		Tags       []string
 	}
 	RestoreData struct {
