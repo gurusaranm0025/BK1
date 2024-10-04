@@ -109,6 +109,14 @@ func (man *Manager) restFileAddEntries(key string, slot types.RestSlot) error {
 
 // common function to add input path 'Slots' to Handler
 func (man *Manager) addSlotsToHandler(slot *types.RestSlot, path string, fileInfo os.FileInfo) error {
+	// Bug fix: when the output file is also in the input file list
+	// (overwriting an already exist file). it gives write too long error due
+	// to recursive backing up
+	if path == man.Handler.Output.Path {
+		return fmt.Errorf("output path [%s], is also given as input path [%s], this leads to recursive backup. So this backup is stopped.\n Try deleting the file or moving the file to a different location", man.Handler.Output.Path, path)
+	}
+
+	// creating header from file info
 	header, err := tar.FileInfoHeader(fileInfo, "")
 	if err != nil {
 		return err
@@ -163,7 +171,8 @@ func (man *Manager) addPathToHandler(path string) error {
 				return err
 			}
 
-			// creating a slot for restore json file entry, and getting header name and parent path
+			// creating a slot for restore json file entry, and getting header
+			// name and parent path
 			var restFileSlot types.RestSlot
 			if restFileSlot.HeaderName, err = filepath.Rel(filepath.Dir(absPath), path); err != nil {
 				return err
@@ -184,7 +193,6 @@ func (man *Manager) addPathToHandler(path string) error {
 
 	} else {
 		// Handling Files
-
 		// creating an entry slot for restore json file, and setting header name and parent path
 		var restFileSlot types.RestSlot
 		restFileSlot.HeaderName = filepath.Base(absPath)
@@ -422,14 +430,14 @@ func (man *Manager) Manage() error {
 			return err
 		}
 
-		for _, file := range man.Handler.InputFiles {
-			fmt.Println(file.Path)
-		}
+		// for _, file := range man.Handler.InputFiles {
+		// 	fmt.Println(file.Path)
+		// }
 
 		// Handling Handler: PACKING
-		// if err := man.Handler.Pack(); err != nil {
-		// 	return err
-		// }
+		if err := man.Handler.Pack(); err != nil {
+			return err
+		}
 
 		return nil
 	}

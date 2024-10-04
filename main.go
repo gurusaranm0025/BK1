@@ -114,6 +114,7 @@ func main() {
 // TODOS
 // 5. try buffer copying and writing
 // 6. Do stress testing
+// 7. Excluding certain paths
 
 // BUGS
-// 1. When the backup file is already present in the directory it end up in write too long error. [this is a problem og recursive tarballing and archiving]
+// None that I know of
