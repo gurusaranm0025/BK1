@@ -3,6 +3,7 @@ package handler
 import (
 	"archive/tar"
 	"encoding/json"
+	"gurusaranm0025/cbak/pkg/conf"
 	"gurusaranm0025/cbak/pkg/types"
 	"io"
 	"os"
@@ -102,7 +103,7 @@ func (han *Handler) packRestoreJSON() error {
 
 	// creating a header for the restore json file
 	header := &tar.Header{
-		Name: "restoreFile.cbak.json",
+		Name: conf.File.RestoreJSoNFileName,
 		Size: int64(len(JSONData)),
 		Mode: 0600,
 	}

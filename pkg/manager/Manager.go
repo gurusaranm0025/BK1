@@ -1,7 +1,5 @@
 package manager
 
-// .cbak used
-
 import (
 	"archive/tar"
 	"encoding/json"
@@ -246,7 +244,7 @@ func (man *Manager) evalBackupConfig() error {
 	// Evaluating backup name
 	if !(len(man.BackupConfig.BackupName) > 0) {
 		man.BackupConfig.BackupName = filepath.Base(man.InputData.BackupData.ConfPath)
-		man.BackupConfig.BackupName = strings.TrimSuffix(man.BackupConfig.BackupName, ".json") + ".cbak"
+		man.BackupConfig.BackupName = strings.TrimSuffix(man.BackupConfig.BackupName, ".json") + conf.File.Ext
 	}
 
 	// Evaluating backup paths in the config file
@@ -349,7 +347,7 @@ func (man *Manager) evalOutputFiles() error {
 		// config is not given or the there are no backup name given in the config
 		if !man.InputData.BackupData.UseConf || (man.InputData.BackupData.UseConf && (len(man.BackupConfig.BackupName) == 0)) {
 			// no config file then name based on current time
-			man.Handler.Output.Path = filepath.Join(man.CWD, "Backup"+time.Now().Format("20060102150405")) + ".cbak"
+			man.Handler.Output.Path = filepath.Join(man.CWD, "Backup"+time.Now().Format("20060102150405")) + conf.File.Ext
 			return nil
 		} else {
 			// using a config
@@ -478,6 +476,11 @@ func (man *Manager) Manage() error {
 			return err
 		}
 
+		return nil
+	}
+
+	if man.InputData.TellVersion {
+		fmt.Println(conf.Version)
 		return nil
 	}
 

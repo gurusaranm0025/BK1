@@ -1,11 +1,10 @@
 package handler
 
-// Using extension .cbak
-
 import (
 	"archive/tar"
 	"bytes"
 	"encoding/json"
+	"gurusaranm0025/cbak/pkg/conf"
 	"io"
 	"os"
 	"path/filepath"
@@ -19,7 +18,7 @@ import (
 func (han *Handler) createWriters() error {
 	var err error
 
-	han.Output.File, err = os.Create(han.Output.Path + ".cbak")
+	han.Output.File, err = os.Create(han.Output.Path)
 	if err != nil {
 		return err
 	}
@@ -68,7 +67,7 @@ func (han *Handler) handleRestoreJSONFile(save bool, path string) error {
 		return err
 	}
 
-	if header.Name == "restoreFile.cbak.json" {
+	if header.Name == conf.File.RestoreJSoNFileName {
 		var buf bytes.Buffer
 
 		if _, err := io.Copy(&buf, han.tar.Reader); err != nil {
@@ -80,7 +79,7 @@ func (han *Handler) handleRestoreJSONFile(save bool, path string) error {
 		}
 
 		if save {
-			inpFile, err := os.Create(filepath.Join(path, "restoreFile.cbak.json"))
+			inpFile, err := os.Create(filepath.Join(path, conf.File.RestoreJSoNFileName))
 			if err != nil {
 				return err
 			}
@@ -105,7 +104,7 @@ func (han *Handler) unTarBaller(isExtract bool) error {
 	// is it extraction
 	if isExtract {
 		// path extarcting
-		dirName := strings.TrimSuffix(filepath.Base(han.Restore.Path), ".cbak")
+		dirName := strings.TrimSuffix(filepath.Base(han.Restore.Path), conf.File.Ext)
 		dirPath = filepath.Join(han.CWD, dirName)
 
 		// making the dir
@@ -113,14 +112,13 @@ func (han *Handler) unTarBaller(isExtract bool) error {
 			return err
 		}
 
-		// saving the restore json File
-		if err := han.handleRestoreJSONFile(true, dirPath); err != nil {
-			return err
-		}
-	} else {
-		if err := han.handleRestoreJSONFile(false, ""); err != nil {
-			return err
-		}
+		// if err := han.handleRestoreJSONFile(true, dirPath); err != nil {
+		// 	return err
+		// }
+	}
+	// handling the restore json File
+	if err := han.handleRestoreJSONFile(isExtract, dirPath); err != nil {
+		return err
 	}
 
 	// going through the tar file

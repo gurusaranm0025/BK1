@@ -7,10 +7,11 @@ import (
 
 // data type for passing all the inputs parsed from the CLI to manager
 type InputData struct {
-	IsBackup   bool
-	IsRestore  bool
-	IsExtract  bool
-	BackupData struct {
+	IsBackup    bool
+	IsRestore   bool
+	IsExtract   bool
+	TellVersion bool
+	BackupData  struct {
 		UseConf    bool
 		ConfPath   string
 		OutputPath string

@@ -99,6 +99,9 @@ func main() {
 	// flag for extracting the file
 	rootCMD.Flags().StringVarP(&InputData.ExtractData.Path, "extract", "E", "", "extracts the backed up file in the cuurent folder to view")
 
+	// version
+	rootCMD.Flags().BoolVarP(&InputData.TellVersion, "version", "v", false, "version of this tool (cbak)")
+
 	if err := rootCMD.Execute(); err != nil {
 		slog.Error(err.Error())
 		os.Exit(1)
@@ -109,10 +112,8 @@ func main() {
 }
 
 // TODOS
-// 1. optimising handler.go file [common unpacking methods, reading the json file method] and in manager.go remove unwanted errors
-// 2. moving the file names, extension formats to conf
-// 3. adding versions
 // 4. getting multiple inputs in --path flag
+// 5. try buffer copying and writing
 
 // BUGS
 // 1. When the backup file is already present in the directory it end up in write too long error. [this is a problem og recursive tarballing and archiving]

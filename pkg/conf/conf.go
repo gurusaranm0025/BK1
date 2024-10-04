@@ -1,6 +1,18 @@
 package conf
 
-import "gurusaranm0025/cbak/pkg/types"
+import (
+	"gurusaranm0025/cbak/pkg/types"
+)
+
+var File = struct {
+	Ext                 string
+	RestoreJSoNFileName string
+}{
+	Ext:                 ".cbak",
+	RestoreJSoNFileName: "restore.cbak.json",
+}
+
+var Version string = "0.6.5"
 
 var ModesPath = struct {
 	Hyprland string
