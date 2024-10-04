@@ -107,6 +107,36 @@ func (man *Manager) restFileAddEntries(key string, slot types.RestSlot) error {
 	return nil
 }
 
+// common function to add input path 'Slots' to Handler
+func (man *Manager) addSlotsToHandler(slot *types.RestSlot, path string, fileInfo os.FileInfo) error {
+	header, err := tar.FileInfoHeader(fileInfo, "")
+	if err != nil {
+		return err
+	}
+
+	// setting the file header name
+	header.Name = slot.HeaderName + time.Now().Format("2006-01-02,15:04:05.000000000")
+
+	if len(header.Name) > 255 {
+		header.Name = time.Now().Format("2006-01-02,15:04:05.000000000")
+	}
+
+	// adding headers and file paths inside the directory to the Handler
+	man.Handler.InputFiles = append(man.Handler.InputFiles, types.InputPaths{
+		Header:   header,
+		Path:     path,
+		IsDir:    fileInfo.IsDir(),
+		FileInfo: fileInfo,
+	})
+
+	// adding entries to the restore json file
+	if err = man.restFileAddEntries(header.Name, *slot); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // common function for adding paths to the Handler
 func (man *Manager) addPathToHandler(path string) error {
 	// absolute path checking
@@ -121,53 +151,27 @@ func (man *Manager) addPathToHandler(path string) error {
 	// appending path to handler data
 	if info.IsDir() {
 		// handling directories
-
 		// Walking the directory
 		err = filepath.Walk(absPath, func(path string, Info fs.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
 
+			// checking for symlinks
 			fileInfo, err := os.Lstat(path)
 			if err != nil {
 				return err
 			}
 
-			// creating header for the files inside the directories
-			fileHeader, err := tar.FileInfoHeader(fileInfo, "")
-			if err != nil {
-				return err
-			}
-
-			// creating a slot for restore json file entry
+			// creating a slot for restore json file entry, and getting header name and parent path
 			var restFileSlot types.RestSlot
-
-			// getting header and parent path for the file
-			restFileSlot.HeaderName, err = filepath.Rel(filepath.Dir(absPath), path)
-			if err != nil {
+			if restFileSlot.HeaderName, err = filepath.Rel(filepath.Dir(absPath), path); err != nil {
 				return err
 			}
-
 			restFileSlot.ParentPath = strings.TrimSuffix(path, restFileSlot.HeaderName)
 
-			// setting the file header name
-			fileHeader.Name = restFileSlot.HeaderName + time.Now().Format("2006-01-02,15:04:05.000000000")
-
-			if len(fileHeader.Name) > 255 {
-				fileHeader.Name = time.Now().Format("2006-01-02,15:04:05.000000000")
-			}
-
-			// adding headers and file paths inside the directory to the Handler
-			man.Handler.InputFiles = append(man.Handler.InputFiles, types.InputPaths{
-				Header:   fileHeader,
-				Path:     path,
-				IsDir:    fileInfo.IsDir(),
-				FileInfo: fileInfo,
-			})
-
-			// adding entries to the restore json file
-			err = man.restFileAddEntries(fileHeader.Name, restFileSlot)
-			if err != nil {
+			// adding the slot and path to the handler
+			if err = man.addSlotsToHandler(&restFileSlot, path, fileInfo); err != nil {
 				return err
 			}
 
@@ -181,37 +185,13 @@ func (man *Manager) addPathToHandler(path string) error {
 	} else {
 		// Handling Files
 
-		// creating header for tarballing the file
-		fileHeader, err := tar.FileInfoHeader(info, "")
-		if err != nil {
-			return err
-		}
-
-		// creating an entry slot for restore json file
+		// creating an entry slot for restore json file, and setting header name and parent path
 		var restFileSlot types.RestSlot
-
-		// getting header name and parent path
 		restFileSlot.HeaderName = filepath.Base(absPath)
 		restFileSlot.ParentPath = strings.TrimSuffix(absPath, restFileSlot.HeaderName)
 
-		// setting file header name
-		fileHeader.Name = filepath.Base(absPath) + time.Now().Format("2006-01-02,15:04:05.000000000")
-
-		if len(fileHeader.Name) > 255 {
-			fileHeader.Name = time.Now().Format("2006-01-02,15:04:05.000000000")
-		}
-
-		// adding header and the path to the handler
-		man.Handler.InputFiles = append(man.Handler.InputFiles, types.InputPaths{
-			Header:   fileHeader,
-			Path:     absPath,
-			IsDir:    info.IsDir(),
-			FileInfo: info,
-		})
-
-		// adding entries to the restore json file
-		err = man.restFileAddEntries(fileHeader.Name, restFileSlot)
-		if err != nil {
+		// adding the slot and path to the handler
+		if err = man.addSlotsToHandler(&restFileSlot, absPath, info); err != nil {
 			return err
 		}
 
@@ -414,6 +394,11 @@ func (man *Manager) evalPath(path string) error {
 func (man *Manager) Manage() error {
 	// IsBackup ==> true
 	if man.InputData.IsBackup {
+		// Evaluating the output path
+		if err := man.evalOutputFiles(); err != nil {
+			return err
+		}
+
 		// Config file
 		if man.InputData.BackupData.UseConf {
 			// reading backup config file
@@ -426,6 +411,7 @@ func (man *Manager) Manage() error {
 				return err
 			}
 		}
+
 		// Evaluating the input path
 		if err := man.evalInputFilePath(); err != nil {
 			return err
@@ -436,15 +422,14 @@ func (man *Manager) Manage() error {
 			return err
 		}
 
-		// Evaluating the output path
-		if err := man.evalOutputFiles(); err != nil {
-			return err
+		for _, file := range man.Handler.InputFiles {
+			fmt.Println(file.Path)
 		}
 
 		// Handling Handler: PACKING
-		if err := man.Handler.Pack(); err != nil {
-			return err
-		}
+		// if err := man.Handler.Pack(); err != nil {
+		// 	return err
+		// }
 
 		return nil
 	}
