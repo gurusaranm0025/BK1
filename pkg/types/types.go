@@ -1,6 +1,9 @@
 package types
 
-import "archive/tar"
+import (
+	"archive/tar"
+	"os"
+)
 
 // data type for passing all the inputs parsed from the CLI to manager
 type InputData struct {
@@ -48,9 +51,10 @@ type BakJSON struct {
 
 // data type for passing the input paths from manager to the handler
 type InputPaths struct {
-	Header *tar.Header
-	Path   string
-	IsDir  bool
+	Header   *tar.Header
+	Path     string
+	IsDir    bool
+	FileInfo os.FileInfo
 }
 
 // data type for different mode types in the tags, and for ModesMap varibale

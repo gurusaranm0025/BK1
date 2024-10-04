@@ -32,7 +32,7 @@ func NewManager(inputData types.InputData) (*Manager, error) {
 	manager.InputData = inputData
 
 	// setting up restJSONFile in Handler
-	manager.Handler.RestJSONFile.Slots = make(map[string]types.RestSlot)
+	manager.Handler.Restore.JSONFile.Slots = make(map[string]types.RestSlot)
 
 	// Getting home dir
 	manager.HomeDir, err = os.UserHomeDir()
@@ -95,14 +95,14 @@ func (man *Manager) restFileAddEntries(key string, slot types.RestSlot) error {
 	slot.ParentPath = strings.Replace(slot.ParentPath, man.HomeDir, "#/HomeDir#/", 1)
 
 	// checking for duplicate entries
-	if man.Handler.RestJSONFile.Slots[key].ParentPath != "" && man.Handler.RestJSONFile.Slots[key].HeaderName != "" {
-		fmt.Println("Existing slot  ===> ", man.Handler.RestJSONFile.Slots[key])
-		fmt.Println("Need to enter slot ===> ", slot)
-		return errors.New("header name is already entered in the restore file")
-	}
+	// if man.Handler.Restore.JSONFile.Slots[key].ParentPath != "" && man.Handler.Restore.JSONFile.Slots[key].HeaderName != "" {
+	// 	fmt.Println("Existing slot  ===> ", man.Handler.Restore.JSONFile.Slots[key])
+	// 	fmt.Println("Need to enter slot ===> ", slot)
+	// 	return errors.New("header name is already entered in the restore file")
+	// }
 
 	// adding entry to the restore json file
-	man.Handler.RestJSONFile.Slots[key] = slot
+	man.Handler.Restore.JSONFile.Slots[key] = slot
 
 	return nil
 }
@@ -113,7 +113,7 @@ func (man *Manager) addPathToHandler(path string) error {
 	absPath := man.convertPathToAbs(path)
 
 	// path checking
-	info, err := os.Stat(absPath)
+	info, err := os.Lstat(absPath)
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,12 @@ func (man *Manager) addPathToHandler(path string) error {
 		// handling directories
 
 		// Walking the directory
-		err = filepath.Walk(absPath, func(path string, fileInfo fs.FileInfo, err error) error {
+		err = filepath.Walk(absPath, func(path string, Info fs.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			fileInfo, err := os.Lstat(path)
 			if err != nil {
 				return err
 			}
@@ -142,16 +147,22 @@ func (man *Manager) addPathToHandler(path string) error {
 			if err != nil {
 				return err
 			}
+
 			restFileSlot.ParentPath = strings.TrimSuffix(path, restFileSlot.HeaderName)
 
 			// setting the file header name
 			fileHeader.Name = restFileSlot.HeaderName + time.Now().Format("2006-01-02,15:04:05.000000000")
 
+			if len(fileHeader.Name) > 255 {
+				fileHeader.Name = time.Now().Format("2006-01-02,15:04:05.000000000")
+			}
+
 			// adding headers and file paths inside the directory to the Handler
 			man.Handler.InputFiles = append(man.Handler.InputFiles, types.InputPaths{
-				Header: fileHeader,
-				Path:   path,
-				IsDir:  fileInfo.IsDir(),
+				Header:   fileHeader,
+				Path:     path,
+				IsDir:    fileInfo.IsDir(),
+				FileInfo: fileInfo,
 			})
 
 			// adding entries to the restore json file
@@ -186,10 +197,16 @@ func (man *Manager) addPathToHandler(path string) error {
 		// setting file header name
 		fileHeader.Name = filepath.Base(absPath) + time.Now().Format("2006-01-02,15:04:05.000000000")
 
+		if len(fileHeader.Name) > 255 {
+			fileHeader.Name = time.Now().Format("2006-01-02,15:04:05.000000000")
+		}
+
 		// adding header and the path to the handler
 		man.Handler.InputFiles = append(man.Handler.InputFiles, types.InputPaths{
-			Header: fileHeader,
-			Path:   absPath,
+			Header:   fileHeader,
+			Path:     absPath,
+			IsDir:    info.IsDir(),
+			FileInfo: info,
 		})
 
 		// adding entries to the restore json file
@@ -306,7 +323,7 @@ func (man *Manager) evalOutputFiles() error {
 		// Is Confif file given
 		if !man.InputData.BackupData.UseConf {
 			// no config file then name based on current time
-			man.Handler.OutputFiles = filepath.Join(man.CWD, "Backup"+time.Now().Format("20060102150405"))
+			man.Handler.Output.Path = filepath.Join(man.CWD, "Backup"+time.Now().Format("20060102150405"))
 			return nil
 		} else {
 			// using a config
@@ -320,7 +337,7 @@ func (man *Manager) evalOutputFiles() error {
 			info, err := os.Stat(absPath)
 			// file doesn't exist NO ISSUES
 			if os.IsNotExist(err) {
-				man.Handler.OutputFiles = absPath
+				man.Handler.Output.Path = absPath
 				return nil
 			}
 
@@ -339,7 +356,7 @@ func (man *Manager) evalOutputFiles() error {
 			}
 
 			// seeting Handler data
-			man.Handler.OutputFiles = absPath
+			man.Handler.Output.Path = absPath
 		}
 	} else {
 		// output path is given
@@ -356,7 +373,7 @@ func (man *Manager) evalOutputFiles() error {
 		}
 
 		if os.IsNotExist(err) {
-			man.Handler.OutputFiles = absPath
+			man.Handler.Output.Path = absPath
 			return nil
 		}
 
@@ -370,7 +387,7 @@ func (man *Manager) evalOutputFiles() error {
 		}
 
 		// setting Handler data
-		man.Handler.OutputFiles = absPath
+		man.Handler.Output.Path = absPath
 	}
 
 	return nil
@@ -394,7 +411,7 @@ func (man *Manager) evalRestFilePath() error {
 	}
 
 	// add file path to the handler
-	man.Handler.RestoreFilePath = man.InputData.RestoreData.FilePath
+	man.Handler.Restore.Path = man.InputData.RestoreData.FilePath
 	return nil
 }
 
@@ -415,7 +432,7 @@ func (man *Manager) evalExtractPath() error {
 	}
 
 	// adding path to the handler
-	man.Handler.RestoreFilePath = man.InputData.ExtractData.Path
+	man.Handler.Restore.Path = man.InputData.ExtractData.Path
 
 	return nil
 }

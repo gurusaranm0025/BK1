@@ -1,8 +1,6 @@
 {
     "BackupName": "testing",
     "BackupPaths": [
-        "~/.config/hypr",
-        "~/Projects/cbak",
         "~/Downloads/ZenBrowser"
     ],
     "Tags": ["hypr","rofi","dunst"]

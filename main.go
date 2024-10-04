@@ -113,3 +113,6 @@ func main() {
 // 2. moving the file names, extension formats to conf
 // 3. adding versions
 // 4. getting multiple inputs in --path flag
+
+// BUGS
+// 1. When the backup file is already present in the directory it end up in write too long error. [this is a problem og recursive tarballing and archiving]
