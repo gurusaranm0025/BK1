@@ -40,8 +40,8 @@ Install the only dependency **make**.
 ### Step 2:
 Clone this repository, where you feel safe,
 
-    https://github.com/gurusaranm0025/CBak.git
-    cd cbak
+    git clone https://github.com/gurusaranm0025/CBak.git
+    cd CBak
 
 then run ,
 
