@@ -306,7 +306,7 @@ func (man *Manager) evalOutputFiles() error {
 		// Is Confif file given
 		if !man.InputData.BackupData.UseConf {
 			// no config file then name based on current time
-			man.Handler.OutputFiles = []string{filepath.Join(man.CWD, "Backup"+time.Now().Format("20060102150405"))}
+			man.Handler.OutputFiles = filepath.Join(man.CWD, "Backup"+time.Now().Format("20060102150405"))
 			return nil
 		} else {
 			// using a config
@@ -320,7 +320,7 @@ func (man *Manager) evalOutputFiles() error {
 			info, err := os.Stat(absPath)
 			// file doesn't exist NO ISSUES
 			if os.IsNotExist(err) {
-				man.Handler.OutputFiles = []string{absPath}
+				man.Handler.OutputFiles = absPath
 				return nil
 			}
 
@@ -339,7 +339,7 @@ func (man *Manager) evalOutputFiles() error {
 			}
 
 			// seeting Handler data
-			man.Handler.OutputFiles = []string{absPath}
+			man.Handler.OutputFiles = absPath
 		}
 	} else {
 		// output path is given
@@ -356,7 +356,7 @@ func (man *Manager) evalOutputFiles() error {
 		}
 
 		if os.IsNotExist(err) {
-			man.Handler.OutputFiles = []string{absPath}
+			man.Handler.OutputFiles = absPath
 			return nil
 		}
 
@@ -370,7 +370,7 @@ func (man *Manager) evalOutputFiles() error {
 		}
 
 		// setting Handler data
-		man.Handler.OutputFiles = []string{absPath}
+		man.Handler.OutputFiles = absPath
 	}
 
 	return nil

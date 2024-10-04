@@ -109,4 +109,7 @@ func main() {
 }
 
 // TODOS
-// 1. adding a method to extract the backed up folder
+// 1. optimising handler.go file [common unpacking methods, reading the json file method] and in manager.go remove unwanted errors
+// 2. moving the file names, extension formats to conf
+// 3. adding versions
+// 4. getting multiple inputs in --path flag

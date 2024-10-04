@@ -16,7 +16,7 @@ import (
 
 type Handler struct {
 	InputFiles      []types.InputPaths
-	OutputFiles     []string //double check this is passed from the manager
+	OutputFiles     string //double check this is passed from the manager
 	RestoreFilePath string
 	tarWriter       *tar.Writer
 	tarReader       *tar.Reader
@@ -87,7 +87,7 @@ func (h *Handler) Pack() error {
 	//////// creating tar and other writers
 
 	// Creating a output file
-	outFile, err := os.Create(h.OutputFiles[0] + ".cb")
+	outFile, err := os.Create(h.OutputFiles + ".cb")
 	if err != nil {
 		return err
 	}
