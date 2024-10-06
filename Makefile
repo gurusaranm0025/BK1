@@ -1,4 +1,3 @@
-# Name of the Go binary
 BINARY_NAME=cbak
 
 # Build and install directory

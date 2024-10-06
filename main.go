@@ -116,6 +116,7 @@ func main() {
 // 6. Do stress testing
 // 7. Excluding certain paths
 // 8. Explore UUID for encoding header names
+// 9. test files
 
 // BUGS
 // None that I know of
