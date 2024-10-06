@@ -12,11 +12,12 @@ type InputData struct {
 	IsExtract   bool
 	TellVersion bool
 	BackupData  struct {
-		UseConf    bool
-		ConfPath   string
-		OutputPath string
-		InputPaths []string
-		Tags       []string
+		UseConf      bool
+		ConfPath     string
+		OutputPath   string
+		ExcludePaths []string
+		InputPaths   []string
+		Tags         []string
 	}
 	RestoreData struct {
 		FilePath string

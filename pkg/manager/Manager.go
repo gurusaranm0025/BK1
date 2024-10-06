@@ -13,6 +13,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 )
@@ -149,6 +150,12 @@ func (man *Manager) addSlotsToHandler(slot *types.RestSlot, path string, fileInf
 func (man *Manager) addPathToHandler(path string) error {
 	// absolute path checking
 	absPath := man.convertPathToAbs(path)
+
+	// checking for excluding the path
+	if slices.Contains(man.InputData.BackupData.ExcludePaths, absPath) {
+		slog.Info(fmt.Sprintf("path %s is excluded.", path))
+		return nil
+	}
 
 	// path checking
 	info, err := os.Lstat(absPath)
@@ -376,6 +383,46 @@ func (man *Manager) evalOutputFiles() error {
 	return nil
 }
 
+// Evaluate Exclusion paths
+func (man *Manager) evalExcludePaths() {
+	// output of this function
+	var outPaths []string
+
+	// looping through the user given paths
+	for _, path := range man.InputData.BackupData.ExcludePaths {
+		// getting absolute paths
+		absPath := man.convertPathToAbs(path)
+
+		// checking the path
+		info, err := os.Stat(absPath)
+		if err != nil {
+			slog.Warn(fmt.Sprintf("The path %s is causing an error. So this path is removed from the exclude list. The error is %s", path, err.Error()))
+			continue
+		}
+
+		if info.IsDir() {
+			// if its a dir
+			filepath.Walk(path, func(path string, info fs.FileInfo, err error) error {
+				if err != nil {
+					// dont return an error, since we will be excluding it NO ISSUES
+					return nil
+				}
+
+				// add that path to the output
+				outPaths = append(outPaths, path)
+
+				return nil
+			})
+		} else {
+			// add the file path to the output
+			outPaths = append(outPaths, absPath)
+		}
+	}
+
+	// replace the user given output, with the abs paths
+	man.InputData.BackupData.ExcludePaths = outPaths
+}
+
 // function for evaluating paths
 func (man *Manager) evalPath(path string) error {
 	// absolute path checking
@@ -406,6 +453,9 @@ func (man *Manager) Manage() error {
 		if err := man.evalOutputFiles(); err != nil {
 			return err
 		}
+
+		// Evaluate exclude paths
+		man.evalExcludePaths()
 
 		// Config file
 		if man.InputData.BackupData.UseConf {

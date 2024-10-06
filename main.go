@@ -99,6 +99,9 @@ func main() {
 	// flag for extracting the file
 	rootCMD.Flags().StringVarP(&InputData.ExtractData.Path, "extract", "E", "", "extracts the backed up file in the cuurent folder")
 
+	// Exclude paths for backup
+	rootCMD.Flags().StringSliceVarP(&InputData.BackupData.ExcludePaths, "exclude", "e", []string{}, "give the paths which you want to avoid comming into backup files.")
+
 	// version
 	rootCMD.Flags().BoolVarP(&InputData.TellVersion, "version", "v", false, "version of this tool (cbak)")
 
