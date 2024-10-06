@@ -115,11 +115,10 @@ func main() {
 }
 
 // TODOS
-// 5. try buffer copying and writing
 // 6. Do stress testing
-// 7. Excluding certain paths
 // 8. Explore UUID for encoding header names
 // 9. test files
+// 10. Verbose mode
 
 // BUGS
 // None that I know of
