@@ -12,7 +12,7 @@ var File = struct {
 	RestoreJSoNFileName: "restore.cbak.json",
 }
 
-var Version string = "0.6.8-alpha"
+var Version string = "0.6.9-alpha"
 
 var ModesPath = struct {
 	Hyprland string
