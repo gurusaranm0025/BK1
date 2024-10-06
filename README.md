@@ -57,3 +57,33 @@ then run ,
 
 for installing the package.
 
+## Backup.conf
+
+Its a json file, from which you can tell which files and folders u want to take backup.
+
+Below is a simple example,
+
+        {
+            "BackupName": "testing",
+            "BackupPaths": [
+                "~/Downloads/ZenBrowser"
+            ],
+            "Tags": ["hypr","rofi","dunst"]
+        }
+
+Here, 
+
+    BackupName  - defines the backup file name.
+
+    BackupPaths - it takes various paths of the files and folders which you want to take backup.
+
+    Tags        - tags are built-in flags which already points towards certain location which may contain config files. There are five available tags right now.
+
+The available tags are,
+
+    hypr    - points to ~/.config/hypr
+    rofi    - points to ~/.config/rofi
+    waybar  - points to ~/.config/waybar
+    wlogout - points to ~/.config/wlogout
+    dunst   - points to ~/.config/dunst
+
